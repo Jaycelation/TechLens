@@ -80,7 +80,14 @@ try {
       chrome.scripting.executeScript({ target, world: 'MAIN', func: collectGlobals }),
       chrome.scripting.executeScript({ target, func: collectBundles }),
     ]);
-    const headers = (await chrome.storage.session.get('headers:' + tab.id))['headers:' + tab.id];
+    // background.js writes headers asynchronously; on slow CI runners the page can finish
+    // loading first, so wait for the entry instead of reading it once.
+    const key = 'headers:' + tab.id;
+    let headers;
+    for (let i = 0; i < 50 && !headers; i++) {
+      headers = (await chrome.storage.session.get(key))[key];
+      if (!headers) await new Promise((r) => setTimeout(r, 100));
+    }
     await chrome.sidePanel.setOptions({ path: 'popup.html?panel', enabled: true });
     return {
       technologies: detect(
