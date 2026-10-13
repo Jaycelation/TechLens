@@ -210,7 +210,8 @@ export async function huntCves(
             age >= 0 &&
             age < 6 * 3600 * 1000 &&
             Array.isArray(c?.payload?.vulns) &&
-            typeof c.payload.partial === 'boolean'
+            // Older releases cached partial results; only complete ones are reused.
+            c.payload.partial === false
           ) {
             raw = c.payload;
             usedCache = true;
