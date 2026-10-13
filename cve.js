@@ -1,7 +1,7 @@
 // Version correlation only. No exploit requests, sink claims, or target transmission.
 export const PACKAGES=Object.freeze({'Next.js':'next','React':'react','jQuery':'jquery','Vue.js':'vue','Nuxt':'nuxt','Angular':'@angular/core','AngularJS':'angular','Bootstrap':'bootstrap','Chart.js':'chart.js','HTMX':'htmx.org','Alpine.js':'alpinejs','D3.js':'d3'});
 export const OSV_ORIGIN='https://api.osv.dev/*';
-const EXACT=/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/;
+const EXACT=/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 function parse(v){const m=EXACT.exec(v||'');if(!m)return null;const pre=m[4]?.split('.')||[];if(pre.some(x=>!x||(/^\d+$/.test(x)&&x.length>1&&x.startsWith('0'))))return null;return {base:m.slice(1,4).map(BigInt),pre};}
 export function compareVersions(a,b){
  const x=parse(a),y=parse(b);if(!x||!y)return null;
@@ -36,7 +36,7 @@ export function matchAffected(advisory,pkg,version){
 }
 export function planHunt(technologies){
  const queries=[],skipped=[];
- for(const t of technologies){const pkg=PACKAGES[t.name];
+ for(const t of technologies){const pkg=Object.hasOwn(PACKAGES,t.name)?PACKAGES[t.name]:null;
   if(!pkg){skipped.push({technology:t.name,reason:'Chưa có mapping package được hỗ trợ'});continue;}
   if(t.versions?.length!==1){skipped.push({technology:t.name,reason:t.versions?.length?'Có nhiều phiên bản — cần xác minh bản đang chạy':'Không có phiên bản chính xác'});continue;}
   const version=t.versions[0];if(!parse(version)){skipped.push({technology:t.name,reason:'Phiên bản không phải SemVer đầy đủ'});continue;}
@@ -56,12 +56,18 @@ export function normalizeAdvisory(v,q){
 }
 export async function huntCves(technologies,{fetchFn=fetch,cache=null,force=false,onProgress=()=>{},signal}={}){
  const plan=planHunt(technologies);const out={provider:'OSV',checkedAt:new Date().toISOString(),sinkVerified:false,queries:[],skipped:plan.skipped};
- for(const [i,q] of plan.queries.entries()){
-  if(i>=12){out.skipped.push({technology:q.technology,reason:'Giới hạn 12 package mỗi lần'});continue;}
+ for(const q of plan.queries.slice(12))out.skipped.push({technology:q.technology,reason:'Giới hạn 12 package mỗi lần'});
+ const scheduled=plan.queries.slice(0,12);let cursor=0;
+ async function check(q,i){
   onProgress(`${q.technology} ${q.version} (${i+1}/${Math.min(plan.queries.length,12)})`);
   const key='cve:npm:'+q.package+'@'+q.version;let raw=null,usedCache=false;
   try{
-   if(!force&&cache){const c=(await cache.get(key))[key];if(c&&Date.now()-c.at<6*3600*1000){raw=c.payload;usedCache=true;}}
+   if(signal?.aborted)throw new Error('Đã hủy CVE Hunt');
+   if(!force&&cache){
+    try{const c=(await cache.get(key))[key];const age=Date.now()-c?.at;
+     if(age>=0&&age<6*3600*1000&&Array.isArray(c?.payload?.vulns)&&typeof c.payload.partial==='boolean'){raw=c.payload;usedCache=true;}
+    }catch{/* A failed cache read must not prevent a fresh query. */}
+   }
    if(!raw){
     raw={vulns:[],partial:false};let token;
     for(let page=0;page<3;page++){
@@ -70,7 +76,7 @@ export async function huntCves(technologies,{fetchFn=fetch,cache=null,force=fals
      try{
       const response=await fetchFn('https://api.osv.dev/v1/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({package:{name:q.package,ecosystem:'npm'},version:q.version,...(token?{page_token:token}:{})}),credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal});
       if(!response.ok)throw new Error(`OSV HTTP ${response.status}`);
-      const data=await response.json();if(data.vulns!==undefined&&!Array.isArray(data.vulns))throw new Error('OSV response không hợp lệ');
+      const data=await response.json();if(!data||typeof data!=='object'||Array.isArray(data)||(data.vulns!==undefined&&!Array.isArray(data.vulns))||(data.next_page_token!==undefined&&typeof data.next_page_token!=='string'))throw new Error('OSV response không hợp lệ');
       raw.vulns.push(...(data.vulns||[]));token=data.next_page_token;
       if(raw.vulns.length>100){raw.vulns=raw.vulns.slice(0,100);raw.partial=true;break;}
       if(!token)break;if(page===2)raw.partial=true;
@@ -80,9 +86,12 @@ export async function huntCves(technologies,{fetchFn=fetch,cache=null,force=fals
    }
    const unique=new Map();
    for(const v of raw.vulns){const a=normalizeAdvisory(v,q);if(a&&!unique.has(a.id))unique.set(a.id,a);}
-   out.queries.push({...q,status:raw.partial?'partial':'complete',cached:usedCache,advisories:[...unique.values()]});
-  }catch(e){out.queries.push({...q,status:'error',error:e.name==='AbortError'?'Hết thời gian chờ / đã hủy; chưa kiểm tra xong':e.message,advisories:[]});}
-  if(signal?.aborted)break;
+   out.queries[i]={...q,status:raw.partial?'partial':'complete',cached:usedCache,advisories:[...unique.values()]};
+  }catch(e){out.queries[i]={...q,status:'error',error:e.name==='AbortError'?'Hết thời gian chờ / đã hủy; chưa kiểm tra xong':e.message,advisories:[]};}
  }
+ // Three workers keep latency down without flooding the API; output stays ordered.
+ await Promise.all(Array.from({length:Math.min(3,scheduled.length)},async()=>{
+  while(cursor<scheduled.length){const i=cursor++;await check(scheduled[i],i);}
+ }));
  return out;
 }

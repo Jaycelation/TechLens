@@ -21,16 +21,20 @@ function render(){
 }
 async function scan(){
  huntController?.abort();huntController=null;$('hunt').disabled=true;$('fresh').disabled=true;$('hunt-results').replaceChildren();$('hunt-status').textContent='Chưa tra CVE.';
+ $('count').textContent='0 công nghệ';$('host').textContent='Trang hiện tại';$('notice').textContent='Quét công nghệ cục bộ · CVE Hunt dùng OSV khi bật';
  $('scan').disabled=true;$('export').disabled=true;$('headers').disabled=true;origin=null;tab=null;report=null;$('results').replaceChildren();$('status').textContent='Đang đọc dấu vết công nghệ…';
  try{
   [tab]=await chrome.tabs.query({active:true,currentWindow:true});
-  if(!tab?.id||!/^https?:\/\//.test(tab.url||''))throw new Error('Hãy mở một trang HTTP/HTTPS. Trang hệ thống và Chrome Web Store không cho phép quét.');
+  if(!Number.isInteger(tab?.id)||!/^https?:\/\//.test(tab.url||''))throw new Error('Hãy mở một trang HTTP/HTTPS. Trang hệ thống và Chrome Web Store không cho phép quét.');
   origin=new URL(tab.url).origin;const target={tabId:tab.id};$('host').textContent=new URL(tab.url).host;
   const [page,global]=await Promise.all([chrome.scripting.executeScript({target,func:collectPage}),chrome.scripting.executeScript({target,world:'MAIN',func:collectGlobals})]);
-  // Avoid mixing results if navigation happened during execution.
-  const current=await chrome.tabs.get(tab.id);if(current.url!==tab.url)throw new Error('Trang đã chuyển hướng. Bấm Quét lại.');
+  // Document IDs distinguish reloads even when the URL does not change.
+  const documentId=page[0]?.documentId;
+  if(!page[0]?.result||!global[0]?.result||!documentId||documentId!==global[0]?.documentId)throw new Error('Trang đã tải lại khi quét. Bấm Quét lại.');
+  const [check]=await chrome.scripting.executeScript({target,func:()=>location.href});
+  const current=await chrome.tabs.get(tab.id);if(check?.documentId!==documentId||check?.result!==tab.url||current.url!==tab.url||current.status==='loading')throw new Error('Trang đã chuyển hướng. Bấm Quét lại.');
   const key='headers:'+tab.id;const cache=(await chrome.storage.session.get(key))[key];
-  const sameDocument=cache&&cache.url.split('#')[0]===tab.url.split('#')[0];
+  const sameDocument=!!(cache&&typeof cache.url==='string'&&Array.isArray(cache.headers)&&cache.url.split('#')[0]===tab.url.split('#')[0]&&Number.isFinite(page[0].result.navigationStartedAt)&&cache.observedAt>=page[0].result.navigationStartedAt);
   const headers=sameDocument?cache.headers:[];
   report={site:origin,scannedAt:new Date().toISOString(),headersAvailable:!!sameDocument,technologies:detect(page[0]?.result,global[0]?.result,headers)};
   $('status').textContent=`${report.technologies.length} công nghệ · ${sameDocument?'Có response headers':'DOM, JavaScript và resources'}`;
@@ -90,7 +94,8 @@ async function runHunt(force){
  finally{if(report===owner&&huntController===controller){$('hunt').disabled=false;$('fresh').disabled=false;huntController=null;}}
 }
 async function manualHunt(force){
- try{const granted=await chrome.permissions.request({origins:[OSV_ORIGIN]});if(granted)await runHunt(force);else $('hunt-status').textContent='Chưa cấp quyền OSV; chưa tra CVE.';}catch(e){$('hunt-status').textContent=e.message;}
+ const owner=report;if(!owner)return;
+ try{const granted=await chrome.permissions.request({origins:[OSV_ORIGIN]});if(report!==owner)return;if(granted)await runHunt(force);else $('hunt-status').textContent='Chưa cấp quyền OSV; chưa tra CVE.';}catch(e){$('hunt-status').textContent=e.message;}
 }
 $('hunt').addEventListener('click',()=>manualHunt(false));$('fresh').addEventListener('click',()=>manualHunt(true));
 $('auto-hunt').addEventListener('change',async()=>{

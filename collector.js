@@ -1,6 +1,6 @@
 // Executed in the isolated world. No network calls or cookie collection.
 export function collectPage() {
- const take = (selector, attr) => Array.from(document.querySelectorAll(selector)).slice(0,2000).map(e => e.getAttribute(attr)||'');
+ const take = (selector, attr) => Array.from(document.querySelectorAll(selector)).slice(0,2000).map(e => e[attr]||e.getAttribute(attr)||'');
  const scripts = take('script[src]','src');
  const links = take('link[href]','href');
  const resources = performance.getEntriesByType('resource').slice(-2000).map(e=>e.name);
@@ -23,7 +23,7 @@ export function collectPage() {
   try { for(const rule of Array.from(sheet.cssRules).slice(0,1000)){css+=rule.cssText.slice(0,1000)+'\n'; if(css.length>300000)break;} }catch{}
   if(css.length>300000)break;
  }
- return {scripts,links,resources,meta,inline,markers:[...markers],css};
+ return {scripts,links,resources,meta,inline,markers:[...markers],css,navigationStartedAt:performance.timeOrigin};
 }
 // Read a small whitelist of page globals; never return tokens or page data.
 export function collectGlobals() {
@@ -35,6 +35,11 @@ export function collectGlobals() {
  read('reactPresent',()=>!!window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.size);
  read('vue',()=>window.Vue?.version);
  read('angular',()=>window.angular?.version?.full);
+ read('bootstrap',()=>window.bootstrap?.Tooltip?.VERSION);
+ read('chart',()=>window.Chart?.version);
+ read('htmx',()=>window.htmx?.version);
+ read('alpine',()=>window.Alpine?.version);
+ read('d3',()=>window.d3?.version);
  read('gtm',()=>!!window.google_tag_manager);
  read('onetrust',()=>!!window.OneTrust);
  read('wordpress',()=>!!window.wp?.hooks);

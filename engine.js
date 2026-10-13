@@ -1,3 +1,4 @@
+import {PACKAGES,compareVersions} from './cve.js';
 // Original fingerprints. These are indicators, not vulnerability assessments.
 export const RULES = [
  ['Next.js',['JavaScript frameworks','Web frameworks'], 'urls', '/_next/', 'high'],
@@ -29,7 +30,7 @@ export const RULES = [
  ['WordPress',['CMS'],'urls','/wp-(?:content|includes)/','high'],
  ['Shopify',['E-commerce'],'urls','cdn\\.shopify\\.com/','high'],
  ['Drupal',['CMS'],'meta','^generator:Drupal(?: ([0-9.]+))?','high',1],
- ['Bootstrap',['UI frameworks'],'urls','bootstrap(?:@|/|-)([0-9]+\\.[0-9]+\\.[0-9]+)|bootstrap(?:\\.min)?\\.(?:css|js)','high',1],
+ ['Bootstrap',['UI frameworks'],'urls','bootstrap(?:@|/|-)([0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?)(?=[/?#]|$)|bootstrap(?:\\.min)?\\.(?:css|js)','high',1],
  ['Cloudflare',['CDN'],'urls','cdnjs\\.cloudflare\\.com/','high'],
  ['jsDelivr',['CDN'],'urls','cdn\\.jsdelivr\\.net/','high'],
  ['unpkg',['CDN'],'urls','unpkg\\.com/','high'],
@@ -55,13 +56,31 @@ export function detect(snapshot={},globals={},headers=[]) {
   if(version && /^\d+(?:\.\d+){1,3}(?:[-+][\w.-]+)?$/.test(version) && !t.versions.includes(version))t.versions.push(version);
   if(!t.evidence.includes(evidence)&&t.evidence.length<8)t.evidence.push(evidence);
  };
- const redact=s=>{try{const u=new URL(s);return u.origin+u.pathname;}catch{return String(s).slice(0,180);}};
+ const redact=s=>{try{const u=new URL(s,'https://relative.invalid/');return (/^https?:$/.test(u.protocol)?(u.origin==='https://relative.invalid'?'':u.origin)+u.pathname:'[non-HTTP resource]').slice(0,240);}catch{return '[invalid resource URL]';}};
  const sources={urls:[...(snapshot.scripts||[]),...(snapshot.links||[]),...(snapshot.resources||[])],markers:snapshot.markers||[],meta:(snapshot.meta||[]).map(m=>m.name+':'+m.content),inline:snapshot.inline||[],css:[snapshot.css||'']};
  for(const [name,categories,source,pattern,confidence,group] of RULES){
   const re=new RegExp(pattern,'i');
   for(const s of sources[source]){const match=re.exec(s);if(match)add(name,categories,confidence,source==='urls'?'Resource: '+redact(s):source==='inline'?'Inline marker: '+match[0].slice(0,100):source+': '+match[0].slice(0,100),group?match[group]:undefined);}
  }
- const defs={jquery:['jQuery',['JavaScript libraries']],next:['Next.js',['JavaScript frameworks','Web frameworks']],react:['React',['JavaScript libraries']],vue:['Vue.js',['JavaScript frameworks']],angular:['AngularJS',['JavaScript frameworks']]};
+ // Extract only full versions from known package CDN layouts.
+ const cdnNames={'jquery':'jQuery','bootstrap':'Bootstrap','vue':'Vue.js','react':'React','d3':'D3.js','Chart.js':'Chart.js','htmx':'HTMX','alpinejs':'Alpine.js'};
+ for(const raw of sources.urls){
+  let url;try{url=new URL(raw);}catch{continue;}
+  if(!/^https?:$/.test(url.protocol))continue;
+  let name,version;
+  if(url.hostname==='cdn.jsdelivr.net'||url.hostname==='unpkg.com'){
+   const path=url.hostname==='cdn.jsdelivr.net'?(url.pathname.startsWith('/npm/')?url.pathname.slice(5):''):url.pathname.slice(1);
+   const m=/^((?:@[^/]+\/)?[^/@]+)@([^/]+)\//.exec(path+'/');
+   if(m){name=Object.keys(PACKAGES).find(n=>PACKAGES[n]===m[1]);version=m[2];}
+  }else if(url.hostname==='cdnjs.cloudflare.com'){
+   const m=/^\/ajax\/libs\/([^/]+)\/([^/]+)\//.exec(url.pathname);if(m){name=cdnNames[m[1]];version=m[2];}
+  }
+  if(name&&compareVersions(version,version)===0){
+   const cats=RULES.find(r=>r[0]===name)?.[1]||['JavaScript libraries'];
+   add(name,cats,'high','Package CDN: '+redact(raw),version);
+  }
+ }
+ const defs={jquery:['jQuery',['JavaScript libraries']],next:['Next.js',['JavaScript frameworks','Web frameworks']],react:['React',['JavaScript libraries']],vue:['Vue.js',['JavaScript frameworks']],angular:['AngularJS',['JavaScript frameworks']],bootstrap:['Bootstrap',['UI frameworks']],chart:['Chart.js',['JavaScript libraries']],htmx:['HTMX',['JavaScript libraries']],alpine:['Alpine.js',['JavaScript frameworks']],d3:['D3.js',['JavaScript libraries']]};
  for(const [key,[name,cats]] of Object.entries(defs)) if(typeof globals[key]==='string')add(name,cats,'high','JavaScript global: '+key+' version',globals[key]);
  if(globals.nextPresent)add('Next.js',['JavaScript frameworks','Web frameworks'],'high','JavaScript global: next / __NEXT_DATA__');
  if(globals.reactPresent)add('React',['JavaScript libraries'],'high','React renderer registered in devtools hook');
