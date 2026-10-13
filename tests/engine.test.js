@@ -173,3 +173,21 @@ test('Bootstrap versioned filenames retain exact stable and prerelease versions'
     assert.deepEqual(r.find((t) => t.name === 'Bootstrap').versions, [version]);
   }
 });
+test('WordPress-bundled jQuery, core ?ver= and more CDN libraries expose versions', () => {
+  const r = detect({
+    scripts: [
+      'https://wp.test/wp-includes/js/jquery/jquery.min.js?ver=3.7.1',
+      'https://wp.test/wp-includes/js/wp-emoji-release.min.js?ver=6.4.2',
+    ],
+    links: [
+      'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css',
+      'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css',
+      'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js',
+    ],
+  });
+  const v = (name) => r.find((t) => t.name === name)?.versions;
+  assert.deepEqual(v('jQuery'), ['3.7.1']);
+  assert.deepEqual(v('WordPress'), ['6.4.2']);
+  assert.deepEqual(v('Font Awesome'), ['4.7.0', '6.5.1']);
+  assert.deepEqual(v('Lodash'), ['4.17.20']);
+});

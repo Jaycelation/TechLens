@@ -32,6 +32,30 @@
     }
   },
   {
+    "name": "WordPress",
+    "categories": ["CMS"],
+    "source": "urls",
+    "pattern": "/wp-(?:includes/(?:css/dist/block-library/style(?:\\.min)?\\.css|js/wp-emoji-release\\.min\\.js|css/dashicons(?:\\.min)?\\.css)|admin/css/[\\w-]+(?:\\.min)?\\.css)\\?(?:[^#]*&)?ver=(\\d+\\.\\d+(?:\\.\\d+)?)(?:[&#]|$)",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "https://wp.test/wp-includes/css/dist/block-library/style.min.css?ver=6.4.2",
+          "version": "6.4.2"
+        },
+        {
+          "input": "https://wp.test/wp-includes/js/wp-emoji-release.min.js?ver=6.5",
+          "version": "6.5"
+        }
+      ],
+      "noMatch": [
+        "https://wp.test/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://wp.test/wp-includes/css/dist/block-library/style.min.css?ver=abc"
+      ]
+    }
+  },
+  {
     "name": "Drupal",
     "categories": ["CMS"],
     "source": "meta",

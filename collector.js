@@ -82,14 +82,25 @@ export function collectGlobals() {
 // Opt-in deep scan: re-reads script files (normally from the HTTP cache) to hash them and pull
 // license banners and source map paths. Runs in the isolated world; cookies are not sent.
 export async function collectBundles(limits = {}) {
-  const maxScripts = limits.maxScripts || 25;
+  const maxScripts = limits.maxScripts || 40;
   const maxBytes = limits.maxBytes || 4_000_000;
   const maxMapBytes = limits.maxMapBytes || 8_000_000;
+  // Module bundlers load libraries as imported chunks that never appear as <script src>,
+  // so also take every JS file the page fetched, largest first (vendor chunks are big).
+  const loaded = performance
+    .getEntriesByType('resource')
+    .filter((e) => e.initiatorType === 'script' || /\.m?js(?:[?#]|$)/.test(e.name))
+    .sort((a, b) => (b.decodedBodySize || 0) - (a.decodedBodySize || 0))
+    .map((e) => e.name);
   const urls = [
     ...new Set(
-      Array.from(document.querySelectorAll('script[src]'))
-        .map((s) => s.src)
-        .filter((u) => /^https?:/.test(u)),
+      [
+        ...Array.from(document.querySelectorAll('script[src]')).map((s) => s.src),
+        ...Array.from(document.querySelectorAll('link[rel="modulepreload"][href]')).map(
+          (l) => l.href,
+        ),
+        ...loaded,
+      ].filter((u) => /^https?:/.test(u)),
     ),
   ].slice(0, maxScripts);
   const read = async (url, limit) => {
