@@ -153,5 +153,40 @@ export function detect(snapshot = {}, globals = {}, headers = []) {
   for (const m of snapshot.markers || [])
     if (m.startsWith('angular:'))
       add('Angular', ['JavaScript frameworks'], 'high', 'DOM: ng-version', m.slice(8));
+  detectWordPressExtensions(sources.urls, map.get('WordPress')?.versions || [], add, map);
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// WordPress enqueues assets with ?ver=, which is the plugin/theme version only when the author set
+// one; otherwise WordPress fills in its own core version. Core-equal values are dropped.
+const WP_PATH = /\/wp-content\/(plugins|themes)\/([a-z0-9][a-z0-9._-]{0,80})\//i;
+function detectWordPressExtensions(urls, coreVersions, add, map) {
+  let count = 0;
+  for (const raw of urls) {
+    let url;
+    try {
+      url = new URL(raw, 'https://relative.invalid/');
+    } catch {
+      continue;
+    }
+    const m = WP_PATH.exec(url.pathname);
+    if (!m) continue;
+    const kind = m[1].toLowerCase() === 'plugins' ? 'plugin' : 'theme';
+    const slug = m[2].toLowerCase();
+    const name = `WP ${kind}: ${slug}`;
+    if (!map.has(name) && ++count > 40) continue;
+    const ver = url.searchParams.get('ver');
+    const version =
+      ver && /^\d+\.\d+(?:\.\d+){0,2}$/.test(ver) && !coreVersions.includes(ver) ? ver : undefined;
+    add(
+      name,
+      [kind === 'plugin' ? 'WordPress plugins' : 'WordPress themes'],
+      'high',
+      'Resource: ' + redact(raw) + (version ? ` (?ver=${version})` : ''),
+      version,
+    );
+    const t = map.get(name);
+    t.versionNote = 'Lấy từ ?ver= — có thể là cache-buster, cần đối chiếu readme.txt/style.css';
+    t.lookup = `https://wpscan.com/${kind}/${encodeURIComponent(slug)}`;
+  }
 }

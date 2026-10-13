@@ -99,3 +99,30 @@ test('header categories merge with existing resource evidence', () => {
   ]);
   assert.ok(r[0].categories.includes('Web servers'));
 });
+test('WordPress plugins and themes are listed with ?ver= only when it differs from core', () => {
+  const r = detect({
+    meta: [{ name: 'generator', content: 'WordPress 6.4.2' }],
+    scripts: [
+      'https://wp.test/wp-content/plugins/contact-form-7/includes/js/index.js?ver=5.8.4',
+      'https://wp.test/wp-content/plugins/akismet/_inc/akismet.js?ver=6.4.2',
+      '/wp-content/themes/twentytwentyfour/style.css?ver=1.0&token=SECRET',
+    ],
+  });
+  assert.deepEqual(r.find((t) => t.name === 'WordPress').versions, ['6.4.2']);
+  const cf7 = r.find((t) => t.name === 'WP plugin: contact-form-7');
+  assert.deepEqual(cf7.versions, ['5.8.4']);
+  assert.ok(cf7.categories.includes('WordPress plugins'));
+  assert.equal(cf7.lookup, 'https://wpscan.com/plugin/contact-form-7');
+  assert.deepEqual(r.find((t) => t.name === 'WP plugin: akismet').versions, []);
+  assert.deepEqual(r.find((t) => t.name === 'WP theme: twentytwentyfour').versions, ['1.0']);
+  assert.ok(!JSON.stringify(r).includes('SECRET'));
+});
+test('server headers expose CPE-ready versions', () => {
+  const r = detect({}, {}, [
+    { name: 'Server', value: 'Apache/2.4.57 (Debian)' },
+    { name: 'X-Powered-By', value: 'PHP/8.1.2-1ubuntu2.14' },
+  ]);
+  assert.deepEqual(r.find((t) => t.name === 'Apache').versions, ['2.4.57']);
+  assert.deepEqual(r.find((t) => t.name === 'PHP').versions, ['8.1.2']);
+  assert.match(r.find((t) => t.name === 'PHP').evidence[0], /ubuntu/);
+});
