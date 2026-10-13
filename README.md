@@ -11,6 +11,11 @@ TechLens is a Chrome/Edge extension (plus a command-line scanner) that fingerpri
 - **Side panel and scan history** to keep results while you browse and see what changed between visits.
 - **Batch CLI** to scan a list of domains and export JSONL or CSV.
 
+<p align="center">
+  <img src="docs/screenshot-tech.png" alt="Detected technologies with versions" width="320">
+  <img src="docs/screenshot-cve.png" alt="CVE Hunt results grouped by severity" width="320">
+</p>
+
 > TechLens reports _indicators_. A matching version does not prove a site is exploitable: the vulnerable code path, configuration or backported patches still need to be verified.
 
 ## Install the extension
