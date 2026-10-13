@@ -14,13 +14,24 @@ class Element {
     this.textContent = '';
     this.checked = false;
     this.hidden = false;
-    this.classList = { add() {} };
+    const classes = new Set();
+    this.classList = {
+      add: (c) => classes.add(c),
+      remove: (c) => classes.delete(c),
+      toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)),
+      contains: (c) => classes.has(c),
+    };
+    this.attributes = {};
+    this.parentElement = { classList: this.classList };
   }
   append(...items) {
     this.children.push(...items);
   }
   replaceChildren() {
     this.children = [];
+  }
+  setAttribute(name, value) {
+    this.attributes[name] = value;
   }
   addEventListener(type, fn) {
     this.events[type] = fn;
@@ -51,6 +62,15 @@ async function setup(url = 'https://fixture.test/', options = {}) {
     'save-history',
     'clear-history',
     'open-panel',
+    'stat-total',
+    'stat-versions',
+    'stat-cve',
+    'tab-tech',
+    'tab-cve',
+    'tab-history',
+    'view-tech',
+    'view-cve',
+    'view-history',
   ];
   const els = Object.fromEntries(ids.map((k) => [k, new Element(k)]));
   const target = { id: 1, url };
@@ -282,4 +302,15 @@ test('CVE Hunt asks for OSV and NVD in one prompt and panel mode hides the panel
   await els.hunt.events.click();
   assert.deepEqual(requested, ['https://api.osv.dev/*', 'https://services.nvd.nist.gov/*']);
   assert.equal(els['open-panel'].hidden, true);
+});
+
+test('stats count versioned technologies, versionless ones are labelled and tabs switch views', async () => {
+  const { els } = await setup();
+  assert.equal(els['stat-total'].textContent, '2');
+  assert.equal(els['stat-versions'].textContent, '2');
+  assert.match(els.count.textContent, /bật Quét sâu/);
+  els['tab-cve'].events.click();
+  assert.equal(els['view-cve'].hidden, false);
+  assert.equal(els['view-tech'].hidden, true);
+  assert.equal(els['tab-cve'].classList.contains('active'), true);
 });

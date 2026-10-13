@@ -34,7 +34,12 @@ function render() {
   const visible = report.technologies.filter((t) =>
     (t.name + ' ' + t.categories.join(' ')).toLowerCase().includes(q),
   );
-  $('count').textContent = `${visible.length} / ${report.technologies.length} công nghệ`;
+  const versioned = report.technologies.filter((t) => t.versions.length).length;
+  $('stat-total').textContent = String(report.technologies.length);
+  $('stat-versions').textContent = String(versioned);
+  $('count').textContent = q
+    ? `${visible.length} / ${report.technologies.length} công nghệ khớp tìm kiếm`
+    : `${report.technologies.length} công nghệ · ${versioned} có phiên bản${report.deepScan || !report.technologies.length ? '' : ' · bật Quét sâu để tìm thêm phiên bản'}`;
   for (const t of visible)
     for (const category of t.categories) {
       if (!groups.has(category)) groups.set(category, []);
@@ -42,15 +47,21 @@ function render() {
     }
   for (const [cat, techs] of [...groups].sort(([a], [b]) => a.localeCompare(b))) {
     $('results').append(node('h2', cat));
+    // Technologies with a known version first: those are the ones CVE Hunt can check.
+    techs.sort((a, b) => !a.versions.length - !b.versions.length || a.name.localeCompare(b.name));
     for (const t of techs) {
       const card = node('article', undefined, 'card'),
         row = node('div', undefined, 'row');
       row.append(node('span', t.name, 'name'));
-      if (t.versions.length) row.append(node('span', t.versions.join(' / '), 'version'));
+      row.append(
+        t.versions.length
+          ? node('span', t.versions.join(' / '), 'version')
+          : node('span', 'không lộ phiên bản', 'version none'),
+      );
       row.append(
         node(
           'span',
-          t.confidence === 'high' ? 'Tin cậy cao' : 'Dấu hiệu',
+          t.confidence === 'high' ? 'Chắc chắn' : 'Dấu hiệu',
           `confidence ${t.confidence}`,
         ),
       );
@@ -78,6 +89,10 @@ function resetView() {
   $('fresh').disabled = true;
   $('hunt-results').replaceChildren();
   $('hunt-status').textContent = 'Chưa tra CVE.';
+  $('stat-total').textContent = '0';
+  $('stat-versions').textContent = '0';
+  $('stat-cve').textContent = '–';
+  $('stat-cve').parentElement.classList.remove('alert');
   $('count').textContent = '0 công nghệ';
   $('host').textContent = 'Trang hiện tại';
   $('notice').textContent = 'Quét công nghệ cục bộ · CVE Hunt dùng OSV/NVD khi bật';
@@ -215,6 +230,12 @@ $('export').addEventListener('click', () => {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
+const SEVERITY = ['UNKNOWN', 'LOW', 'MODERATE', 'MEDIUM', 'HIGH', 'CRITICAL'];
+const severityLabel = (s) => {
+  const v = String(s || 'UNKNOWN').toUpperCase();
+  return v === 'MODERATE' ? 'MEDIUM' : SEVERITY.includes(v) ? v : 'UNKNOWN';
+};
+const severityRank = (s) => SEVERITY.indexOf(severityLabel(s));
 function renderHunt(data) {
   $('hunt-results').replaceChildren();
   let matches = 0,
@@ -261,14 +282,39 @@ function renderHunt(data) {
             `Không tìm thấy trong dữ liệu ${cpe ? 'NVD' : 'OSV'} đã kiểm tra. Không phải chứng nhận an toàn.`,
           ),
         );
-      for (const a of q.advisories) {
+      const sorted = [...q.advisories].sort(
+        (a, b) => !!b.kev - !!a.kev || severityRank(b.severity) - severityRank(a.severity),
+      );
+      const counts = {};
+      for (const a of sorted)
+        counts[severityLabel(a.severity)] = (counts[severityLabel(a.severity)] || 0) + 1;
+      if (sorted.length) {
+        const chips = node('div', undefined, 'sev-summary');
+        for (const level of ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'])
+          if (counts[level])
+            chips.append(node('span', `${counts[level]} ${level}`, 'sev ' + level.toLowerCase()));
+        section.append(chips);
+      }
+      // Long lists (e.g. an old PHP) stay readable: show the worst few, fold the rest.
+      let target = section;
+      for (const [index, a] of sorted.entries()) {
+        if (index === 5) {
+          const more = node('details', undefined, 'more');
+          more.append(node('summary', `Xem thêm ${sorted.length - 5} advisory`));
+          section.append(more);
+          target = more;
+        }
         if (a.status === 'version_affected') matches++;
         else review++;
         if (a.kev) kev++;
-        const item = node('details');
-        item.append(
-          node('summary', `${a.cves.join(', ') || a.id} · ${a.severity}${a.kev ? ' · KEV' : ''}`),
+        const item = node('details', undefined, 'advisory');
+        const head = node('summary');
+        head.append(
+          node('span', severityLabel(a.severity), 'sev ' + severityLabel(a.severity).toLowerCase()),
         );
+        if (a.kev) head.append(node('span', 'KEV', 'sev kev'));
+        head.append(node('span', a.cves.join(', ') || a.id, 'adv-id'));
+        item.append(head);
         item.append(node('p', a.summary));
         if (a.kev)
           item.append(node('p', 'CISA KEV: lỗ hổng này đã bị khai thác thực tế.', 'review'));
@@ -309,7 +355,7 @@ function renderHunt(data) {
             'Xác minh tiếp: version trên backend → điều kiện trong advisory → input tới sink → impact có thể tái hiện.',
           ),
         );
-        section.append(item);
+        target.append(item);
       }
     }
     $('hunt-results').append(section);
@@ -320,6 +366,8 @@ function renderHunt(data) {
   for (const s of data.skipped) ul.append(node('li', `${s.technology}: ${s.reason}`));
   d.append(ul);
   $('hunt-results').append(d);
+  $('stat-cve').textContent = String(matches);
+  $('stat-cve').parentElement.classList.toggle('alert', matches > 0);
   $('hunt-status').textContent =
     `${matches} khớp phiên bản · ${review} cần review · ${errors} lỗi${kev ? ' · ' + kev + ' KEV' : ''}${partial ? ' · ' + partial + ' kết quả chưa đầy đủ' : ''}. Chưa xác minh sink/khả năng khai thác.`;
 }
@@ -448,6 +496,16 @@ $('open-panel').addEventListener('click', () => {
     },
   );
 });
+
+const TABS = { 'tab-tech': 'view-tech', 'tab-cve': 'view-cve', 'tab-history': 'view-history' };
+function showTab(id) {
+  for (const [tab, view] of Object.entries(TABS)) {
+    $(tab).classList.toggle('active', tab === id);
+    $(tab).setAttribute('aria-selected', String(tab === id));
+    $(view).hidden = tab !== id;
+  }
+}
+for (const tab of Object.keys(TABS)) $(tab).addEventListener('click', () => showTab(tab));
 
 async function init() {
   if (PANEL) document.body.classList.add('panel');
