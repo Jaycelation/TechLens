@@ -1,0 +1,276 @@
+[
+  {
+    "name": "Vercel",
+    "categories": ["PaaS"],
+    "source": "headers",
+    "header": "x-vercel-id",
+    "pattern": "",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "iad1::abc"
+        }
+      ],
+      "noMatch": []
+    }
+  },
+  {
+    "name": "Vercel",
+    "categories": ["PaaS"],
+    "source": "headers",
+    "header": "x-vercel-cache",
+    "pattern": "",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "HIT"
+        }
+      ],
+      "noMatch": []
+    }
+  },
+  {
+    "name": "Cloudflare",
+    "categories": ["CDN"],
+    "source": "headers",
+    "header": "cf-ray",
+    "pattern": "",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "8a1b2c3d4e5f-SIN"
+        }
+      ],
+      "noMatch": []
+    }
+  },
+  {
+    "name": "Cloudflare",
+    "categories": ["CDN"],
+    "source": "headers",
+    "header": "server",
+    "pattern": "^cloudflare",
+    "confidence": "high",
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "cloudflare"
+        }
+      ],
+      "noMatch": ["nginx"]
+    }
+  },
+  {
+    "name": "Next.js",
+    "categories": ["JavaScript frameworks", "Web frameworks", "Web servers"],
+    "source": "headers",
+    "header": "x-powered-by",
+    "pattern": "next\\.js",
+    "confidence": "high",
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "Next.js"
+        }
+      ],
+      "noMatch": ["Express"]
+    }
+  },
+  {
+    "name": "Nginx",
+    "categories": ["Web servers"],
+    "source": "headers",
+    "header": "server",
+    "pattern": "nginx(?:/(\\d+\\.\\d+(?:\\.\\d+)?))?",
+    "confidence": "high",
+    "version": 1,
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "nginx/1.24.0",
+          "version": "1.24.0"
+        },
+        {
+          "input": "nginx"
+        }
+      ],
+      "noMatch": ["openresty/1.21.4.1", "Apache"]
+    }
+  },
+  {
+    "name": "OpenResty",
+    "categories": ["Web servers"],
+    "source": "headers",
+    "header": "server",
+    "pattern": "openresty(?:/(\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?))?",
+    "confidence": "high",
+    "version": 1,
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "openresty/1.21.4.1",
+          "version": "1.21.4.1"
+        }
+      ],
+      "noMatch": ["nginx/1.24.0"]
+    }
+  },
+  {
+    "name": "Apache",
+    "categories": ["Web servers"],
+    "source": "headers",
+    "header": "server",
+    "pattern": "^apache(?:/(\\d+\\.\\d+(?:\\.\\d+)?)|$|\\s)",
+    "confidence": "high",
+    "version": 1,
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "Apache/2.4.57 (Debian)",
+          "version": "2.4.57"
+        },
+        {
+          "input": "Apache"
+        }
+      ],
+      "noMatch": ["nginx", "Apache-Coyote/1.1"]
+    }
+  },
+  {
+    "name": "Microsoft IIS",
+    "categories": ["Web servers"],
+    "source": "headers",
+    "header": "server",
+    "pattern": "microsoft-iis(?:/(\\d+\\.\\d+))?",
+    "confidence": "high",
+    "version": 1,
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "Microsoft-IIS/10.0",
+          "version": "10.0"
+        }
+      ],
+      "noMatch": ["nginx"]
+    }
+  },
+  {
+    "name": "LiteSpeed",
+    "categories": ["Web servers"],
+    "source": "headers",
+    "header": "server",
+    "pattern": "^litespeed",
+    "confidence": "high",
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "LiteSpeed"
+        }
+      ],
+      "noMatch": ["nginx"]
+    }
+  },
+  {
+    "name": "Caddy",
+    "categories": ["Web servers"],
+    "source": "headers",
+    "header": "server",
+    "pattern": "^caddy",
+    "confidence": "high",
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "Caddy"
+        }
+      ],
+      "noMatch": ["nginx"]
+    }
+  },
+  {
+    "name": "PHP",
+    "categories": ["Programming languages"],
+    "source": "headers",
+    "header": "x-powered-by",
+    "pattern": "php(?:/(\\d+\\.\\d+\\.\\d+))?",
+    "confidence": "high",
+    "version": 1,
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "PHP/8.1.2-1ubuntu2.14",
+          "version": "8.1.2"
+        },
+        {
+          "input": "PHP/7.4.33",
+          "version": "7.4.33"
+        }
+      ],
+      "noMatch": ["Express", "ASP.NET"]
+    }
+  },
+  {
+    "name": "Express",
+    "categories": ["Web frameworks"],
+    "source": "headers",
+    "header": "x-powered-by",
+    "pattern": "^express$",
+    "confidence": "high",
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "Express"
+        }
+      ],
+      "noMatch": ["Next.js"]
+    }
+  },
+  {
+    "name": "ASP.NET",
+    "categories": ["Web frameworks"],
+    "source": "headers",
+    "header": "x-powered-by",
+    "pattern": "^asp\\.net$",
+    "confidence": "high",
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "ASP.NET"
+        }
+      ],
+      "noMatch": ["PHP/8.1.2"]
+    }
+  },
+  {
+    "name": "ASP.NET",
+    "categories": ["Web frameworks"],
+    "source": "headers",
+    "header": "x-aspnet-version",
+    "pattern": "^(\\d+\\.\\d+\\.\\d+)",
+    "confidence": "high",
+    "version": 1,
+    "showValue": true,
+    "examples": {
+      "match": [
+        {
+          "input": "4.0.30319",
+          "version": "4.0.30319"
+        }
+      ],
+      "noMatch": ["abc"]
+    }
+  }
+]

@@ -1,0 +1,245 @@
+[
+  {
+    "name": "Google Analytics",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "https?://(?:www\\.)?google-analytics\\.com/|https?://www\\.googletagmanager\\.com/gtag/js\\?",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://www.google-analytics.com/analytics.js"
+        },
+        {
+          "input": "https://www.googletagmanager.com/gtag/js?id=UA-1"
+        }
+      ],
+      "noMatch": ["https://x.test/google-analytics.js"]
+    }
+  },
+  {
+    "name": "GA4",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "googletagmanager\\.com/gtag/js\\?[^#]*\\bid=G-[A-Z0-9]+|google-analytics\\.com/g/collect",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://www.googletagmanager.com/gtag/js?id=G-AB123"
+        }
+      ],
+      "noMatch": ["https://www.googletagmanager.com/gtag/js?id=UA-1"]
+    }
+  },
+  {
+    "name": "Google Tag Manager",
+    "categories": ["Tag managers"],
+    "source": "urls",
+    "pattern": "googletagmanager\\.com/gtm\\.js",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://www.googletagmanager.com/gtm.js?id=GTM-1"
+        }
+      ],
+      "noMatch": ["https://www.googletagmanager.com/gtag/js?id=G-1"]
+    }
+  },
+  {
+    "name": "Vercel Analytics",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "/_vercel/insights/|va\\.vercel-scripts\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/_vercel/insights/script.js"
+        }
+      ],
+      "noMatch": ["https://x.test/_vercel/speed-insights/script.js"]
+    }
+  },
+  {
+    "name": "Vercel Speed Insights",
+    "categories": ["Performance"],
+    "source": "urls",
+    "pattern": "/_vercel/speed-insights/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/_vercel/speed-insights/script.js"
+        }
+      ],
+      "noMatch": ["https://x.test/_vercel/insights/script.js"]
+    }
+  },
+  {
+    "name": "Siteimprove",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "(?:siteimproveanalytics\\.com|siteimprove\\.com)/.*(?:js|collect)|siteimproveanalytics\\.io/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://siteimproveanalytics.com/js/siteanalyze_1.js"
+        }
+      ],
+      "noMatch": ["https://siteimprove.com/about"]
+    }
+  },
+  {
+    "name": "Hotjar",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "(?:static|script)\\.hotjar\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://static.hotjar.com/c/hotjar-1.js"
+        }
+      ],
+      "noMatch": ["https://www.hotjar.com/"]
+    }
+  },
+  {
+    "name": "Microsoft Clarity",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "clarity\\.ms/tag/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://www.clarity.ms/tag/abc"
+        }
+      ],
+      "noMatch": ["https://clarity.ms/"]
+    }
+  },
+  {
+    "name": "Plausible",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "plausible\\.io/js/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://plausible.io/js/script.js"
+        }
+      ],
+      "noMatch": ["https://plausible.io/"]
+    }
+  },
+  {
+    "name": "Matomo",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "matomo\\.js(?:[?#]|$)",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/matomo.js"
+        }
+      ],
+      "noMatch": ["https://x.test/matomo.json"]
+    }
+  },
+  {
+    "name": "Segment",
+    "categories": ["Analytics"],
+    "source": "urls",
+    "pattern": "cdn\\.segment\\.com/analytics",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://cdn.segment.com/analytics.js/v1/k/analytics.min.js"
+        }
+      ],
+      "noMatch": ["https://segment.com/"]
+    }
+  },
+  {
+    "name": "Sentry",
+    "categories": ["Monitoring"],
+    "source": "urls",
+    "pattern": "(?:browser\\.sentry-cdn\\.com|js\\.sentry-cdn\\.com)/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://browser.sentry-cdn.com/7.0.0/bundle.min.js"
+        }
+      ],
+      "noMatch": ["https://sentry.io/"]
+    }
+  },
+  {
+    "name": "Adobe Fonts",
+    "categories": ["Font scripts"],
+    "source": "urls",
+    "pattern": "(?:use|p)\\.typekit\\.net/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://use.typekit.net/abc.css"
+        }
+      ],
+      "noMatch": ["https://typekit.com/"]
+    }
+  },
+  {
+    "name": "Google Fonts",
+    "categories": ["Font scripts"],
+    "source": "urls",
+    "pattern": "fonts\\.(?:googleapis|gstatic)\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://fonts.googleapis.com/css2?family=Inter"
+        }
+      ],
+      "noMatch": ["https://x.test/fonts/inter.woff2"]
+    }
+  },
+  {
+    "name": "OneTrust",
+    "categories": ["Cookie compliance"],
+    "source": "urls",
+    "pattern": "(?:cdn\\.cookielaw\\.org|onetrust\\.com)/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js"
+        }
+      ],
+      "noMatch": ["https://x.test/cookielaw.js"]
+    }
+  },
+  {
+    "name": "Cookiebot",
+    "categories": ["Cookie compliance"],
+    "source": "urls",
+    "pattern": "(?:consent|consentcdn)\\.cookiebot\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://consent.cookiebot.com/uc.js"
+        }
+      ],
+      "noMatch": ["https://www.cookiebot.com/"]
+    }
+  }
+]

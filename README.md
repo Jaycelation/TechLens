@@ -1,62 +1,95 @@
-# TechLens 1.1 — CVE Hunt
-Extension Chrome/Edge theo phong cách Wappalyzer, dùng Manifest V3. Mã nguồn và fingerprints tự viết, không sao chép cơ sở dữ liệu Wappalyzer. Không cần npm install hoặc build.
+# TechLens
 
-## Cài đặt
-1. Giải nén ZIP.
-2. Chrome: mở `chrome://extensions`; Edge: `edge://extensions`.
-3. Bật **Developer mode** → **Load unpacked**.
-4. Chọn thư mục `techlens` chứa `manifest.json`.
-5. Mở website HTTP/HTTPS, bấm icon TechLens. Ghim icon nếu cần.
+**See what a website is built with — and whether those versions have known vulnerabilities.**
 
-## Sử dụng
-- Quét theo yêu cầu, tìm kiếm theo tên/nhóm, mở bằng chứng, xuất JSON.
-- **Bật đọc headers cho site này**: cấp quyền tùy chọn cho origin hiện tại, sau đó tự tải lại website và bấm **Quét lại**. Chỉ lưu các header công nghệ server, x-powered-by, x-vercel-id, x-vercel-cache, cf-ray trong bộ nhớ phiên trình duyệt; xóa khi đóng tab.
-- Quyền activeTab/scripting đọc trang khi bấm extension; storage lưu headers tạm thời; webRequest quan sát headers khi có quyền host. Không thu cookies hay authorization. Quét công nghệ hoạt động cục bộ. CVE Hunt gửi package và phiên bản tới OSV khi bạn bật.
-- Thu hồi quyền site qua trang chi tiết extension của trình duyệt. Việc đọc headers vẫn có thể xảy ra trên site đã cấp quyền trong các lần truy cập tiếp theo.
+TechLens is a Chrome/Edge extension (plus a command-line scanner) that fingerprints the technologies behind any website and checks the exact versions it finds against public vulnerability databases.
 
-## CVE Hunt (mới ở 1.1)
-1. Sau khi quét công nghệ, bấm **CVE Hunt**, cho phép kết nối `api.osv.dev` nếu trình duyệt hỏi.
-2. Bật **Tự hunt khi quét** để tự tra cứu mỗi lần mở popup hoặc bấm Quét lại. Không quét mọi tab trong nền, không theo dõi toàn bộ lịch sử duyệt web. Tắt checkbox để ngừng auto hunt.
-3. **Tra mới** bỏ cache 6 giờ và tra cứu lại. **Xuất JSON** bao gồm kết quả CVE nếu đã hunt xong.
+- **Detects 60+ technologies** — frameworks, libraries, CMS, analytics, CDNs, web servers — and shows the evidence for every result.
+- **Finds real version numbers**, even in bundled code: matches script files against 2,500+ official library releases, reads license banners and source maps.
+- **CVE Hunt** looks up detected versions in [OSV](https://osv.dev) (npm packages) and [NVD](https://nvd.nist.gov) (Nginx, Apache, PHP, WordPress…), and flags vulnerabilities on the CISA _Known Exploited_ list.
+- **Privacy first** — scanning happens locally in your browser. CVE lookups send only a package name and version, never the website URL.
+- **Side panel and scan history** to keep results while you browse and see what changed between visits.
+- **Batch CLI** to scan a list of domains and export JSONL or CSV.
 
-Nguồn: OSV API, dữ liệu bao gồm GHSA/CVE theo package. Hiện hỗ trợ mapping npm: next, react, jquery, vue, nuxt, @angular/core, angular, bootstrap, chart.js, htmx.org, alpinejs, d3. Không tra CVE cho Analytics/PaaS hay web server Nginx/Apache trong bản này. Không suy ra react-dom/react-server-dom-* từ React phía browser.
+> TechLens reports _indicators_. A matching version does not prove a site is exploitable: the vulnerable code path, configuration or backported patches still need to be verified.
 
-- Chỉ query khi có đúng một version SemVer đầy đủ (x.y.z, có thể kèm prerelease/build). Thiếu version, version x.y, hoặc nhiều version mâu thuẫn: ghi lý do chưa kiểm tra.
-- Gửi đúng package/ecosystem/version tới `/v1/query`, rồi kiểm tra lại identity npm package và dải SEMVER / danh sách affected versions. Hỗ trợ introduced, fixed (exclusive), last_affected (inclusive), limit (exclusive), prerelease, nhiều khoảng affected. Không chỉ so sánh “nhỏ hơn bản vá mới nhất”.
-- **Khớp dải phiên bản**: version được công khai nằm trong khoảng affected. **Cần review**: OSV trả advisory nhưng dữ liệu range không đủ để xác nhận. Bản đã vá không khớp, advisory withdrawn được loại.
-- Mọi kết quả giữ **sink chưa xác minh**. Đọc version không chứng minh code/path đang hoạt động hay input đi tới sink. Với Next.js, phải kiểm tra backend, router/config/feature và điều kiện trong advisory; với jQuery, phải chứng minh nguồn dữ liệu không tin cậy tới DOM manipulation sink đúng điều kiện CVE. Extension không tự gửi payload khai thác.
-- Hiện CVE ID (nếu có alias), severity từ advisory, CVSS vector nếu có, dải affected, bản vá các nhánh, mô tả điều kiện, link nguồn và bằng chứng nhận diện version. Advisory chưa có CVE vẫn hiện GHSA/OSV ID. Fixed versions là dữ liệu các nhánh, không tự chọn bản nâng cấp cho deployment.
-- Không gửi URL website, HTML, resource URLs, cookies hoặc bằng chứng version tới OSV; chỉ package/version và page_token khi cần. Export giữ bằng chứng locally. OSV có thể thấy IP của người gọi theo kết nối bình thường.
-- Cache theo npm/package/version trong storage.session, TTL 6 giờ, không chứa domain target; preference autoHunt lưu local. Quyền OSV có thể thu hồi trong trang quản lý extension.
-- Giới hạn 12 package, 3 trang API, 100 advisory/package, timeout 25 giây/request. Vượt giới hạn ghi partial hoặc skipped; lỗi mạng không biến thành kết quả “an toàn”. Không tìm thấy CVE không chứng minh không có lỗ hổng.
-- Đóng popup dừng phiên quét; mở lại để chạy lại. Kiểm tra một snapshot trang tại thời điểm scan; nếu trang navigate sau đó, quét lại để dùng version mới.
+## Install the extension
 
-## Nhận diện và giới hạn
-45 fingerprints tài nguyên/DOM/CSS + globals và headers. Bao gồm Next.js, React, jQuery, GA4, GTM, Siteimprove, Vercel Analytics, Adobe Fonts, Lucide, Radix UI, Tailwind, OneTrust, Open Graph, Turbopack và Priority Hints.
+Requires Chrome or Edge **123 or later**.
 
-- Không hardcode Next.js 16.2.10 hay jQuery 4.0.0 từ ví dụ. Phiên bản chỉ xuất hiện nếu global, meta generator, tên resource hoặc header công khai cung cấp giá trị.
-- Next.js không tự động chứng minh static export, Vercel hosting, hoặc loại web server. Chỉ gắn nhóm Web servers khi header x-powered-by xác nhận Next.js. GA4 và Google Analytics cùng hiển thị khi có tín hiệu tương ứng.
-- Dấu hiệu medium là heuristic (Tailwind CSS, Turbopack, Svelte...); high cũng có thể bị website giả mạo. Đây là fingerprinting, không xác minh lỗ hổng/CVE.
-- Chỉ đọc main frame; không kiểm tra iframe, không tải source bundle/stylesheet từ xa. CSS khác origin thường không đọc được; bundled libraries có thể không lộ tên hoặc version.
-- Giới hạn 20.000 DOM elements, 2.000 tài nguyên, 300 KB CSS để tránh quét trang quá lớn. Trang đang tải, consent/adblock và lazy loading có thể làm thiếu kết quả. Đợi trang tải rồi Quét lại.
-- Header chỉ thu từ những lần điều hướng sau khi cấp quyền; cache/memory cache và service worker có thể khiến trình duyệt không phát sự kiện headers. Cache được đối chiếu URL nhưng không chứng minh độ mới tuyệt đối; tải lại nếu cần.
-- Export chỉ giữ origin và bằng chứng URL đã bỏ query/hash, tránh đưa tracking tokens vào JSON. Inline chỉ xuất marker đã khớp.
+1. Download `TechLens-<version>.zip` from the [latest release](https://github.com/Jaycelation/TechScan/releases/latest) and unzip it.
+   (Or clone this repository — the extension runs straight from the source folder, no build step.)
+2. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge).
+3. Turn on **Developer mode**.
+4. Click **Load unpacked** and select the folder that contains `manifest.json`.
+5. Pin **TechLens** from the extensions (puzzle) menu.
 
-## Thêm công nghệ
-Sửa `engine.js` → `RULES`: `[name, categories, source, regex, confidence, versionCaptureGroup?]`.
-Nguồn: urls, markers, meta, inline, css. Muốn thêm global, bổ sung whitelist trong collectGlobals và mapping trong engine. Reload extension sau sửa.
+To update, replace the folder contents and click the reload ↻ button on the TechLens card.
 
-## Kiểm thử
-`node --test tests/*.test.js` (Node 18+).
-Mở `tests/fixture.html` qua HTTP (ví dụ `python3 -m http.server 8080` tại thư mục techlens) rồi vào `http://localhost:8080/tests/fixture.html` để kiểm thử thủ công globals/DOM. Fixture dùng dấu vết tổng hợp, không tải tracker thật.
+## Use the extension
 
-Đã pass 24 kiểm thử tự động cho engine, collector, popup và CVE Hunt (SemVer, boundaries, prerelease, cache, API failure, pagination, stale results). Integration trực tiếp OSV xác nhận jQuery 3.4.1 khớp CVE-2020-11022/11023, còn 3.5.0 và 4.0.0 không khớp hai CVE đó. Có thể chạy lại bằng `node tests/live-osv.mjs`. Chưa kiểm thử cài đặt/giao diện trong Chrome/Edge thực tế; cần kiểm tra trước khi phát hành lên store.
+The interface is currently in Vietnamese; button labels are shown below with their meaning.
 
-## Kiến trúc
-popup.js điều phối → collector.js đọc DOM và global whitelist → engine.js trả kết quả có bằng chứng. background.js giữ whitelist headers khi có quyền site. Không có backend riêng, remote code, eval hay dependency cài ngoài. CVE Hunt gọi OSV API để lấy dữ liệu advisory (JSON).
+### Scan a page
 
-Tài liệu API: https://developer.chrome.com/docs/extensions/reference/api/scripting và https://developer.chrome.com/docs/extensions/reference/api/webRequest
+Open any `http://` or `https://` page and click the TechLens icon. Results are grouped by category; open **Xem bằng chứng** (show evidence) on a card to see why it was detected. Use the search box to filter, **Quét lại** (rescan) after the page changes, and **Xuất JSON** (export JSON) to save the report.
 
-OSV API: https://google.github.io/osv.dev/post-v1-query/
-OSV schema: https://ossf.github.io/osv-schema/
-Ví dụ điều kiện source/sink của jQuery: https://github.com/jquery/jquery/security/advisories/GHSA-gxr4-xjj5-5px2
+### Options
+
+| Option                                 | What it does                                                                                                                                                         |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Quét sâu bundle** (deep bundle scan) | Re-reads the page's scripts (usually from cache, without cookies) to identify versions by file hash, license banner and source map. Off by default.                  |
+| **Cấp quyền site** (grant site access) | Lets TechLens read server headers (e.g. `Server: nginx/1.24.0`) and scan this site from the side panel. Reload the page afterwards.                                  |
+| **Mở side panel** (open side panel)    | Keeps results visible while you switch tabs; the panel rescans the active tab automatically.                                                                         |
+| **Lưu lịch sử** (save history)         | Keeps your last 50 scans on this device and highlights added, removed and upgraded technologies. Off by default; **Xóa lịch sử** (clear history) removes everything. |
+
+### CVE Hunt
+
+1. After a scan, click **CVE Hunt** and allow access to `api.osv.dev` and `services.nvd.nist.gov` when asked.
+2. Each technology with an exact version is checked. Results show the CVE/GHSA ID, severity, CVSS vector, affected and fixed versions, and links to the advisory. **KEV** marks vulnerabilities known to be exploited in the wild.
+3. **Tra mới** (refresh) bypasses the 6-hour cache. **Tự hunt khi quét** (auto-hunt on scan) runs CVE Hunt every time you scan.
+
+Technologies without an exact version are listed as _chưa kiểm tra_ (not checked) with the reason. Server versions from Linux distribution packages (for example `Apache/2.4.57 (Debian)`) are marked _cần review_ (needs review), because distributions often backport fixes without changing the version number.
+
+## Command-line scanner
+
+Scan many sites with the same detection engine in headless Chromium. **Only scan targets you are authorised to test.**
+
+Requires Node.js 20+.
+
+```sh
+git clone https://github.com/Jaycelation/TechScan.git && cd TechScan
+npm install
+npx playwright install chromium
+
+node cli/techscan.mjs example.com                        # one site, JSON lines to stdout
+node cli/techscan.mjs -i domains.txt --deep --cve -o results.jsonl
+node cli/techscan.mjs -i domains.txt -f csv > stack.csv  # one row per technology
+```
+
+| Flag                      | Description                                          |
+| ------------------------- | ---------------------------------------------------- |
+| `-i, --input <file>`      | Targets from a file, one per line (`#` for comments) |
+| `-o, --output <file>`     | Write to a file instead of stdout                    |
+| `-f, --format jsonl\|csv` | Output format (default `jsonl`)                      |
+| `-c, --concurrency <n>`   | Pages scanned in parallel (default 4)                |
+| `--deep`                  | Deep bundle scan (hashes, banners, source maps)      |
+| `--cve`                   | Look up CVEs via OSV and NVD                         |
+| `--timeout <ms>`          | Page load timeout (default 30000)                    |
+
+Targets without a scheme are treated as `https://`. Sites that fail to load are reported as error rows without stopping the run.
+
+## Privacy
+
+- Page scanning runs entirely in your browser; no TechLens server exists.
+- CVE Hunt sends OSV a package name and version, and NVD a product identifier (CPE). Website URLs, page content and cookies are never sent.
+- Only a short list of technology headers is kept, in session memory, and cleared when the tab closes.
+- History is opt-in, stored locally, and contains only site origins, technology names and versions.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for adding fingerprints, running tests and the project layout.
+
+## License
+
+[MIT](LICENSE)
