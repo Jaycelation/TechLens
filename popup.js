@@ -61,7 +61,8 @@ function renderHunt(data){
   const proof=node('details');proof.append(node('summary','Bằng chứng nhận diện phiên bản'));const evidence=node('ul');for(const ev of q.versionEvidence||[])evidence.append(node('li',ev));proof.append(evidence);section.append(proof);
   if(q.status==='error'){errors++;section.append(node('p',`Chưa kiểm tra: ${q.error}`));}
   else{
-   if(q.status==='partial'){partial++;section.append(node('p','Kết quả bị giới hạn; có thể còn advisory chưa tải.'));}
+   if(q.status==='partial'){partial++;section.append(node('p','Kết quả chưa đầy đủ; có thể còn advisory chưa tải.'));}
+   if(q.warning)section.append(node('p',q.warning));
    section.append(node('p',`${q.cached?'Cache ≤ 6 giờ · ':''}${q.advisories.length} advisory liên quan`));
    if(!q.advisories.length)section.append(node('p','Không tìm thấy trong dữ liệu OSV đã kiểm tra. Không phải chứng nhận an toàn.'));
    for(const a of q.advisories){

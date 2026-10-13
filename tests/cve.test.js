@@ -59,3 +59,31 @@ test('empty ranges remain unknown and different package advisories are excluded'
  const r=record();r.affected[0].ranges[0].events=[];assert.equal(matchAffected(r,'jquery','3.4.1'),'unknown');
  r.affected[0].package.name='unrelated';assert.equal(normalizeAdvisory(r,q),null);
 });
+test('SemVer rejects empty build identifiers',()=>{
+ for(const version of ['1.2.3+..','1.2.3+build.','1.2.3+.build','1.2.3+a..b'])assert.equal(compareVersions(version,'1.2.3'),null);
+ assert.equal(compareVersions('1.2.3+build.001','1.2.3'),0);
+});
+test('broken and malformed cache fall back to network; abort also applies to cache hits',async()=>{
+ for(const c of [{get:async()=>{throw Error('storage unavailable')}},{get:async key=>({[key]:{at:Date.now(),payload:{vulns:'bad'}}})}]){
+  const out=await huntCves(technologies,{cache:c,fetchFn:async()=>response({vulns:[record()]})});assert.equal(out.queries[0].status,'complete');assert.equal(out.queries[0].advisories.length,1);
+ }
+ const c=cache();await huntCves(technologies,{cache:c,fetchFn:async()=>response({vulns:[]})});const controller=new AbortController();controller.abort();
+ const out=await huntCves(technologies,{cache:c,signal:controller.signal});assert.equal(out.queries[0].status,'error');
+});
+test('invalid provider objects are errors, never clean results',async()=>{
+ for(const data of [null,[],{next_page_token:42},{vulns:{}}]){const out=await huntCves(technologies,{fetchFn:async()=>response(data)});assert.equal(out.queries[0].status,'error');}
+});
+test('parallel lookup is bounded and output retains input order',async()=>{
+ const techs=['jQuery','React','Next.js','Vue.js','Bootstrap'].map(name=>({name,versions:['1.0.0']}));let active=0,max=0;
+ const out=await huntCves(techs,{fetchFn:async()=>{active++;max=Math.max(max,active);await new Promise(r=>setTimeout(r,10));active--;return response({vulns:[]});}});
+ assert.equal(max,3);assert.deepEqual(out.queries.map(q=>q.technology),techs.map(t=>t.name));
+});
+test('later pagination failure preserves matches as partial and does not cache incomplete data',async()=>{
+ let calls=0;const c=cache();const out=await huntCves(technologies,{cache:c,fetchFn:async()=>++calls===1?response({vulns:[record()],next_page_token:'next'}):{ok:false,status:503}});
+ assert.equal(out.queries[0].status,'partial');assert.equal(out.queries[0].advisories.length,1);assert.match(out.queries[0].warning,/503/);assert.deepEqual(c.state,{});
+});
+test('partial cache entries from previous releases are retried',async()=>{
+ const c=cache();c.state['cve:npm:jquery@3.4.1']={at:Date.now(),payload:{vulns:[],partial:true}};let requests=0;
+ const out=await huntCves(technologies,{cache:c,fetchFn:async()=>{requests++;return response({vulns:[record()]});}});
+ assert.equal(requests,1);assert.equal(out.queries[0].cached,false);assert.equal(out.queries[0].status,'complete');assert.equal(out.queries[0].advisories.length,1);
+});

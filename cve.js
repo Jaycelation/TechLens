@@ -65,7 +65,7 @@ export async function huntCves(technologies,{fetchFn=fetch,cache=null,force=fals
    if(signal?.aborted)throw new Error('Đã hủy CVE Hunt');
    if(!force&&cache){
     try{const c=(await cache.get(key))[key];const age=Date.now()-c?.at;
-     if(age>=0&&age<6*3600*1000&&Array.isArray(c?.payload?.vulns)&&typeof c.payload.partial==='boolean'){raw=c.payload;usedCache=true;}
+     if(age>=0&&age<6*3600*1000&&Array.isArray(c?.payload?.vulns)&&c.payload.partial===false){raw=c.payload;usedCache=true;}
     }catch{/* A failed cache read must not prevent a fresh query. */}
    }
    if(!raw){
@@ -80,13 +80,16 @@ export async function huntCves(technologies,{fetchFn=fetch,cache=null,force=fals
       raw.vulns.push(...(data.vulns||[]));token=data.next_page_token;
       if(raw.vulns.length>100){raw.vulns=raw.vulns.slice(0,100);raw.partial=true;break;}
       if(!token)break;if(page===2)raw.partial=true;
+     }catch(e){
+      if(page===0||signal?.aborted)throw e;
+      raw.partial=true;raw.warning=e.name==='AbortError'?'Hết thời gian chờ trang tiếp theo':e.message;break;
      }finally{clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
     }
-    if(cache){try{await cache.set({[key]:{at:Date.now(),payload:raw}});}catch{/* quota: results still usable */}}
+    if(cache&&!raw.partial){try{await cache.set({[key]:{at:Date.now(),payload:raw}});}catch{/* quota: results still usable */}}
    }
    const unique=new Map();
    for(const v of raw.vulns){const a=normalizeAdvisory(v,q);if(a&&!unique.has(a.id))unique.set(a.id,a);}
-   out.queries[i]={...q,status:raw.partial?'partial':'complete',cached:usedCache,advisories:[...unique.values()]};
+   out.queries[i]={...q,status:raw.partial?'partial':'complete',cached:usedCache,...(raw.warning?{warning:raw.warning}:{}),advisories:[...unique.values()]};
   }catch(e){out.queries[i]={...q,status:'error',error:e.name==='AbortError'?'Hết thời gian chờ / đã hủy; chưa kiểm tra xong':e.message,advisories:[]};}
  }
  // Three workers keep latency down without flooding the API; output stays ordered.

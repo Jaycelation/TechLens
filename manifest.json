@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TechLens — Website Technology Inspector",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Inspect website technologies and correlate exact package versions with OSV advisories.",
   "minimum_chrome_version": "106",
   "permissions": [
