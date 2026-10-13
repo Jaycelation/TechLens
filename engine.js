@@ -30,7 +30,7 @@ export const RULES = [
  ['WordPress',['CMS'],'urls','/wp-(?:content|includes)/','high'],
  ['Shopify',['E-commerce'],'urls','cdn\\.shopify\\.com/','high'],
  ['Drupal',['CMS'],'meta','^generator:Drupal(?: ([0-9.]+))?','high',1],
- ['Bootstrap',['UI frameworks'],'urls','bootstrap(?:@|/|-)([0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?)(?=[/?#]|$)|bootstrap(?:\\.min)?\\.(?:css|js)','high',1],
+ ['Bootstrap',['UI frameworks'],'urls','bootstrap(?:@|/|-|(?:\\.min)?\\.(?:css|js))','high'],
  ['Cloudflare',['CDN'],'urls','cdnjs\\.cloudflare\\.com/','high'],
  ['jsDelivr',['CDN'],'urls','cdn\\.jsdelivr\\.net/','high'],
  ['unpkg',['CDN'],'urls','unpkg\\.com/','high'],
@@ -73,7 +73,11 @@ export function detect(snapshot={},globals={},headers=[]) {
    const m=/^((?:@[^/]+\/)?[^/@]+)@([^/]+)\//.exec(path+'/');
    if(m){name=Object.keys(PACKAGES).find(n=>PACKAGES[n]===m[1]);version=m[2];}
   }else if(url.hostname==='cdnjs.cloudflare.com'){
-   const m=/^\/ajax\/libs\/([^/]+)\/([^/]+)\//.exec(url.pathname);if(m){name=cdnNames[m[1]];version=m[2];}
+   const m=/^\/ajax\/libs\/([^/]+)\/([^/]+)\//.exec(url.pathname);if(m){name=Object.hasOwn(cdnNames,m[1])?cdnNames[m[1]]:null;version=m[2];}
+  }
+  if(!name){
+   const m=/^bootstrap-(.+?)(?:\.min)?\.(?:css|js)$/.exec(url.pathname.split('/').pop());
+   if(m){name='Bootstrap';version=m[1];}
   }
   if(name&&compareVersions(version,version)===0){
    const cats=RULES.find(r=>r[0]===name)?.[1]||['JavaScript libraries'];
