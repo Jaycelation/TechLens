@@ -10,5 +10,8 @@
   "devDependencies": {
     "playwright": "1.63.0",
     "prettier": "3.9.10"
+  },
+  "bin": {
+    "techscan": "cli/techscan.mjs"
   }
 }
