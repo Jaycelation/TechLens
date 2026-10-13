@@ -20,6 +20,23 @@
     }
   },
   {
+    "name": "jQuery",
+    "categories": ["JavaScript libraries"],
+    "source": "urls",
+    "pattern": "/wp-includes/js/jquery/jquery(?:\\.min)?\\.js\\?(?:[^#]*&)?ver=(\\d+\\.\\d+\\.\\d+)",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "https://wp.test/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+          "version": "3.7.1"
+        }
+      ],
+      "noMatch": ["https://wp.test/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1"]
+    }
+  },
+  {
     "name": "jQuery CDN",
     "categories": ["CDN"],
     "source": "urls",

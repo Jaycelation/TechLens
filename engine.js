@@ -8,6 +8,11 @@ const compiled = RULES.filter((rule) => rule.source !== 'banners').map((rule) =>
   ...rule,
   re: new RegExp(rule.pattern, 'i'),
 }));
+// npm packages we can name but that have no CVE mapping in cve.js.
+const NPM_ONLY = {
+  '@fortawesome/fontawesome-free': 'Font Awesome',
+  'font-awesome': 'Font Awesome',
+};
 const categoriesOf = (name) => RULES.find((r) => r.name === name)?.categories;
 
 export function redact(s) {
@@ -81,15 +86,23 @@ export function detect(snapshot = {}, globals = {}, headers = []) {
       if (hit) add(rule.name, rule.categories, rule.confidence, hit.evidence, hit.version);
     }
   // Extract only full versions from known package CDN layouts.
+  // cdnjs library ids differ from npm names; only map ids we have a technology for.
   const cdnNames = {
     jquery: 'jQuery',
     bootstrap: 'Bootstrap',
+    'twitter-bootstrap': 'Bootstrap',
     vue: 'Vue.js',
     react: 'React',
     d3: 'D3.js',
     'Chart.js': 'Chart.js',
     htmx: 'HTMX',
     alpinejs: 'Alpine.js',
+    angular: 'AngularJS',
+    'angular.js': 'AngularJS',
+    'lodash.js': 'Lodash',
+    'moment.js': 'Moment.js',
+    dompurify: 'DOMPurify',
+    'font-awesome': 'Font Awesome',
   };
   for (const raw of sources.urls) {
     let url;
@@ -109,7 +122,9 @@ export function detect(snapshot = {}, globals = {}, headers = []) {
           : url.pathname.slice(1);
       const m = /^((?:@[^/]+\/)?[^/@]+)@([^/]+)\//.exec(path + '/');
       if (m) {
-        name = Object.keys(PACKAGES).find((n) => PACKAGES[n] === m[1]);
+        name =
+          Object.keys(PACKAGES).find((n) => PACKAGES[n] === m[1]) ||
+          (Object.hasOwn(NPM_ONLY, m[1]) ? NPM_ONLY[m[1]] : undefined);
         version = m[2];
       }
     } else if (url.hostname === 'cdnjs.cloudflare.com') {

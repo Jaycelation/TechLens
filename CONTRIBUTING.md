@@ -12,6 +12,7 @@ npx playwright install chromium   # only for e2e tests and the CLI
 | `npm test`                                           | Unit tests (Node 20+)                                                                                           |
 | `npm run lint` / `npm run format`                    | Prettier check / fix                                                                                            |
 | `npm run e2e`                                        | Loads the extension in real Chromium and scans a local fixture site (needs internet once to fetch jQuery 3.4.1) |
+| `node scripts/screenshots.mjs`                       | Regenerates `docs/screenshot-*.png` from a local demo site                                                      |
 | `node tests/live-osv.mjs`, `node tests/live-nvd.mjs` | Smoke tests against the real OSV and NVD APIs                                                                   |
 
 CI runs lint and unit tests on Node 20 and 22, plus e2e, for every push and pull request.

@@ -11,13 +11,18 @@ TechLens is a Chrome/Edge extension (plus a command-line scanner) that fingerpri
 - **Side panel and scan history** to keep results while you browse and see what changed between visits.
 - **Batch CLI** to scan a list of domains and export JSONL or CSV.
 
+<p align="center">
+  <img src="docs/screenshot-tech.png" alt="Detected technologies with versions" width="320">
+  <img src="docs/screenshot-cve.png" alt="CVE Hunt results grouped by severity" width="320">
+</p>
+
 > TechLens reports _indicators_. A matching version does not prove a site is exploitable: the vulnerable code path, configuration or backported patches still need to be verified.
 
 ## Install the extension
 
 Requires Chrome or Edge **123 or later**.
 
-1. Download `TechLens-<version>.zip` from the [latest release](https://github.com/Jaycelation/TechScan/releases/latest) and unzip it.
+1. Download `TechLens-<version>.zip` from the [latest release](https://github.com/Jaycelation/TechLens/releases/latest) and unzip it.
    (Or clone this repository — the extension runs straight from the source folder, no build step.)
 2. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge).
 3. Turn on **Developer mode**.
@@ -58,7 +63,7 @@ Scan many sites with the same detection engine in headless Chromium. **Only scan
 Requires Node.js 20+.
 
 ```sh
-git clone https://github.com/Jaycelation/TechScan.git && cd TechScan
+git clone https://github.com/Jaycelation/TechLens.git && cd TechLens
 npm install
 npx playwright install chromium
 
