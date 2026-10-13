@@ -115,8 +115,16 @@ export function detect(snapshot = {}, globals = {}, headers = []) {
     } else if (url.hostname === 'cdnjs.cloudflare.com') {
       const m = /^\/ajax\/libs\/([^/]+)\/([^/]+)\//.exec(url.pathname);
       if (m) {
-        name = cdnNames[m[1]];
+        name = Object.hasOwn(cdnNames, m[1]) ? cdnNames[m[1]] : null;
         version = m[2];
+      }
+    }
+    // Self-hosted bootstrap-<version>.min.js filenames; compareVersions rejects non-SemVer.
+    if (!name) {
+      const m = /^bootstrap-(.+?)(?:\.min)?\.(?:css|js)$/.exec(url.pathname.split('/').pop());
+      if (m) {
+        name = 'Bootstrap';
+        version = m[1];
       }
     }
     if (name && compareVersions(version, version) === 0)

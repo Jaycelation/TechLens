@@ -248,8 +248,9 @@ function renderHunt(data) {
     } else {
       if (q.status === 'partial') {
         partial++;
-        section.append(node('p', 'Kết quả bị giới hạn; có thể còn advisory chưa tải.'));
+        section.append(node('p', 'Kết quả chưa đầy đủ; có thể còn advisory chưa tải.'));
       }
+      if (q.warning) section.append(node('p', q.warning));
       section.append(
         node('p', `${q.cached ? 'Cache ≤ 6 giờ · ' : ''}${q.advisories.length} advisory liên quan`),
       );

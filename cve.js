@@ -260,12 +260,18 @@ export async function huntCves(
             }
             if (!token) break;
             if (page === 2) raw.partial = true;
+          } catch (e) {
+            // A failed later page keeps what was already fetched instead of discarding it.
+            if (page === 0 || signal?.aborted) throw e;
+            raw.partial = true;
+            raw.warning = e.name === 'AbortError' ? 'Hết thời gian chờ trang tiếp theo' : e.message;
+            break;
           } finally {
             clearTimeout(timer);
             signal?.removeEventListener('abort', cancel);
           }
         }
-        if (cache) {
+        if (cache && !raw.partial) {
           try {
             await cache.set({ [key]: { at: Date.now(), payload: raw } });
           } catch {
@@ -282,6 +288,7 @@ export async function huntCves(
         ...q,
         status: raw.partial ? 'partial' : 'complete',
         cached: usedCache,
+        ...(raw.warning ? { warning: raw.warning } : {}),
         advisories: [...unique.values()],
       };
     } catch (e) {

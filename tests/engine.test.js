@@ -126,3 +126,50 @@ test('server headers expose CPE-ready versions', () => {
   assert.deepEqual(r.find((t) => t.name === 'PHP').versions, ['8.1.2']);
   assert.match(r.find((t) => t.name === 'PHP').evidence[0], /ubuntu/);
 });
+test('relative and protocol-relative evidence drops secrets and URL credentials', () => {
+  for (const url of [
+    '/jquery-3.4.1.min.js?token=SECRET#SECRET',
+    '//user:SECRET@code.jquery.com/jquery-3.4.1.min.js?token=SECRET',
+  ]) {
+    const r = detect({ scripts: [url] });
+    assert.ok(r.some((t) => t.name === 'jQuery'));
+    assert.ok(!JSON.stringify(r).includes('SECRET'));
+  }
+});
+test('known package CDNs provide exact versions including prereleases without guessing aliases', () => {
+  const r = detect({
+    scripts: [
+      'https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js',
+      'https://unpkg.com/@angular/core@17.0.0/fesm2022/core.mjs',
+      'https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js',
+      'https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta.1/dist/js/bootstrap.min.js',
+    ],
+  });
+  for (const [name, v] of [
+    ['jQuery', '3.4.1'],
+    ['Angular', '17.0.0'],
+    ['Vue.js', '2.6.14'],
+    ['Bootstrap', '5.0.0-beta.1'],
+  ])
+    assert.deepEqual(r.find((t) => t.name === name).versions, [v]);
+  for (const url of [
+    'https://unpkg.com/react@latest/umd/react.js',
+    'https://cdn.jsdelivr.net/npm/react@18/umd/react.js',
+    'https://fake.test/npm/react@18.0.0/react.js',
+  ])
+    assert.ok(!detect({ scripts: [url] }).some((t) => t.versions.length));
+});
+test('additional library globals expose exact CVE-queryable versions', () => {
+  const r = detect(
+    {},
+    { bootstrap: '4.3.1', chart: '2.9.4', htmx: '1.9.0', alpine: '3.0.0', d3: '5.0.0' },
+  );
+  assert.equal(r.length, 5);
+  assert.ok(r.every((t) => t.versions.length === 1));
+});
+test('Bootstrap versioned filenames retain exact stable and prerelease versions', () => {
+  for (const version of ['3.3.7', '5.0.0-beta.1']) {
+    const r = detect({ scripts: [`https://site.test/assets/bootstrap-${version}.min.js`] });
+    assert.deepEqual(r.find((t) => t.name === 'Bootstrap').versions, [version]);
+  }
+});

@@ -38,14 +38,12 @@
     "name": "Bootstrap",
     "categories": ["UI frameworks"],
     "source": "urls",
-    "pattern": "bootstrap(?:@|/|-)([0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?)(?=[/?#]|$)|bootstrap(?:\\.min)?\\.(?:css|js)",
+    "pattern": "bootstrap(?:@|/|-|(?:\\.min)?\\.(?:css|js))",
     "confidence": "high",
-    "version": 1,
     "examples": {
       "match": [
         {
-          "input": "https://x.test/bootstrap-3.3.7/js/bootstrap.min.js",
-          "version": "3.3.7"
+          "input": "https://x.test/bootstrap-3.3.7/js/bootstrap.min.js"
         },
         {
           "input": "https://x.test/css/bootstrap.min.css"
