@@ -1,7 +1,9 @@
 # TechLens 1.1 — CVE Hunt
+
 Extension Chrome/Edge theo phong cách Wappalyzer, dùng Manifest V3. Mã nguồn và fingerprints tự viết, không sao chép cơ sở dữ liệu Wappalyzer. Không cần npm install hoặc build.
 
 ## Cài đặt
+
 1. Giải nén ZIP.
 2. Chrome: mở `chrome://extensions`; Edge: `edge://extensions`.
 3. Bật **Developer mode** → **Load unpacked**.
@@ -9,12 +11,14 @@ Extension Chrome/Edge theo phong cách Wappalyzer, dùng Manifest V3. Mã nguồ
 5. Mở website HTTP/HTTPS, bấm icon TechLens. Ghim icon nếu cần.
 
 ## Sử dụng
+
 - Quét theo yêu cầu, tìm kiếm theo tên/nhóm, mở bằng chứng, xuất JSON.
 - **Bật đọc headers cho site này**: cấp quyền tùy chọn cho origin hiện tại, sau đó tự tải lại website và bấm **Quét lại**. Chỉ lưu các header công nghệ server, x-powered-by, x-vercel-id, x-vercel-cache, cf-ray trong bộ nhớ phiên trình duyệt; xóa khi đóng tab.
 - Quyền activeTab/scripting đọc trang khi bấm extension; storage lưu headers tạm thời; webRequest quan sát headers khi có quyền host. Không thu cookies hay authorization. Quét công nghệ hoạt động cục bộ. CVE Hunt gửi package và phiên bản tới OSV khi bạn bật.
 - Thu hồi quyền site qua trang chi tiết extension của trình duyệt. Việc đọc headers vẫn có thể xảy ra trên site đã cấp quyền trong các lần truy cập tiếp theo.
 
 ## CVE Hunt (mới ở 1.1)
+
 1. Sau khi quét công nghệ, bấm **CVE Hunt**, cho phép kết nối `api.osv.dev` nếu trình duyệt hỏi.
 2. Bật **Tự hunt khi quét** để tự tra cứu mỗi lần mở popup hoặc bấm Quét lại. Không quét mọi tab trong nền, không theo dõi toàn bộ lịch sử duyệt web. Tắt checkbox để ngừng auto hunt.
 3. **Tra mới** bỏ cache 6 giờ và tra cứu lại. **Xuất JSON** bao gồm kết quả CVE nếu đã hunt xong.
@@ -32,6 +36,7 @@ Nguồn: OSV API, dữ liệu bao gồm GHSA/CVE theo package. Hiện hỗ trợ
 - Đóng popup dừng phiên quét; mở lại để chạy lại. Kiểm tra một snapshot trang tại thời điểm scan; nếu trang navigate sau đó, quét lại để dùng version mới.
 
 ## Nhận diện và giới hạn
+
 45 fingerprints tài nguyên/DOM/CSS + globals và headers. Bao gồm Next.js, React, jQuery, GA4, GTM, Siteimprove, Vercel Analytics, Adobe Fonts, Lucide, Radix UI, Tailwind, OneTrust, Open Graph, Turbopack và Priority Hints.
 
 - Không hardcode Next.js 16.2.10 hay jQuery 4.0.0 từ ví dụ. Phiên bản chỉ xuất hiện nếu global, meta generator, tên resource hoặc header công khai cung cấp giá trị.
@@ -43,16 +48,19 @@ Nguồn: OSV API, dữ liệu bao gồm GHSA/CVE theo package. Hiện hỗ trợ
 - Export chỉ giữ origin và bằng chứng URL đã bỏ query/hash, tránh đưa tracking tokens vào JSON. Inline chỉ xuất marker đã khớp.
 
 ## Thêm công nghệ
+
 Sửa `engine.js` → `RULES`: `[name, categories, source, regex, confidence, versionCaptureGroup?]`.
 Nguồn: urls, markers, meta, inline, css. Muốn thêm global, bổ sung whitelist trong collectGlobals và mapping trong engine. Reload extension sau sửa.
 
 ## Kiểm thử
+
 `node --test tests/*.test.js` (Node 18+).
 Mở `tests/fixture.html` qua HTTP (ví dụ `python3 -m http.server 8080` tại thư mục techlens) rồi vào `http://localhost:8080/tests/fixture.html` để kiểm thử thủ công globals/DOM. Fixture dùng dấu vết tổng hợp, không tải tracker thật.
 
 Đã pass 24 kiểm thử tự động cho engine, collector, popup và CVE Hunt (SemVer, boundaries, prerelease, cache, API failure, pagination, stale results). Integration trực tiếp OSV xác nhận jQuery 3.4.1 khớp CVE-2020-11022/11023, còn 3.5.0 và 4.0.0 không khớp hai CVE đó. Có thể chạy lại bằng `node tests/live-osv.mjs`. Chưa kiểm thử cài đặt/giao diện trong Chrome/Edge thực tế; cần kiểm tra trước khi phát hành lên store.
 
 ## Kiến trúc
+
 popup.js điều phối → collector.js đọc DOM và global whitelist → engine.js trả kết quả có bằng chứng. background.js giữ whitelist headers khi có quyền site. Không có backend riêng, remote code, eval hay dependency cài ngoài. CVE Hunt gọi OSV API để lấy dữ liệu advisory (JSON).
 
 Tài liệu API: https://developer.chrome.com/docs/extensions/reference/api/scripting và https://developer.chrome.com/docs/extensions/reference/api/webRequest
