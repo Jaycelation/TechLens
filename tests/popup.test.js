@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import fs from 'node:fs';
 import { detect } from '../engine.js';
+import { addHistory, diffScans } from '../history.js';
 class Element {
   constructor(tag) {
     this.tag = tag;
@@ -11,6 +12,9 @@ class Element {
     this.value = '';
     this.disabled = false;
     this.textContent = '';
+    this.checked = false;
+    this.hidden = false;
+    this.classList = { add() {} };
   }
   append(...items) {
     this.children.push(...items);
@@ -41,28 +45,63 @@ async function setup(url = 'https://fixture.test/', options = {}) {
     'auto-hunt',
     'hunt-status',
     'hunt-results',
+    'deep-scan',
+    'history-list',
+    'history-summary',
+    'save-history',
+    'clear-history',
+    'open-panel',
   ];
   const els = Object.fromEntries(ids.map((k) => [k, new Element(k)]));
   const target = { id: 1, url };
   const calls = [];
+  const stored = {};
+  const requested = [];
   const context = vm.createContext({
-    document: { getElementById: (id) => els[id], createElement: (tag) => new Element(tag) },
+    document: {
+      getElementById: (id) => els[id],
+      createElement: (tag) => new Element(tag),
+      body: new Element('body'),
+    },
+    location: { search: options.panel ? '?panel' : '' },
+    addHistory,
+    diffScans,
+    collectBundles() {},
+    NVD_ORIGIN: 'https://services.nvd.nist.gov/*',
     URL,
+    URLSearchParams,
     Blob,
     Date,
     setTimeout,
     AbortController,
     detect,
     OSV_ORIGIN: 'https://api.osv.dev/*',
-    huntCves: options.hunt || (async () => ({ queries: [], skipped: [] })),
+    huntAll: options.hunt || (async () => ({ queries: [], skipped: [] })),
     collectPage() {},
     collectGlobals() {},
     chrome: {
-      tabs: { query: async () => [target], get: async () => target },
+      tabs: {
+        query: async () => [target],
+        get: async () => target,
+        onActivated: { addListener() {} },
+        onUpdated: { addListener() {} },
+      },
       scripting: {
         executeScript: async (args) => {
           calls.push(args);
           // The third call re-reads location.href to detect redirects mid-scan.
+          if (args.func === context.collectBundles)
+            return [
+              {
+                documentId: 'doc-1',
+                result: [
+                  {
+                    url: 'https://fixture.test/v.js',
+                    sha256: 'CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=',
+                  },
+                ],
+              },
+            ];
           if (args.func !== context.collectPage && args.func !== context.collectGlobals)
             return [{ documentId: options.checkId || 'doc-1', result: url }];
           return [
@@ -77,11 +116,18 @@ async function setup(url = 'https://fixture.test/', options = {}) {
       },
       storage: {
         session: { get: async () => (options.headers ? { 'headers:1': options.headers } : {}) },
-        local: { get: async () => options.prefs || {}, set: async () => {} },
+        local: {
+          get: async () => ({ ...(options.prefs || {}), ...stored }),
+          set: async (data) => Object.assign(stored, data),
+          remove: async (key) => delete stored[key],
+        },
       },
       permissions: {
         contains: async () => !!options.permitted,
-        request: async () => options.granted !== false,
+        request: async (req) => {
+          requested.push(...req.origins);
+          return options.granted !== false;
+        },
       },
     },
   });
@@ -89,8 +135,9 @@ async function setup(url = 'https://fixture.test/', options = {}) {
     .readFileSync(new URL('../popup.js', import.meta.url), 'utf8')
     .replace(/^import .*;\n/gm, '');
   vm.runInContext(source, context);
-  await new Promise((resolve) => setImmediate(resolve));
-  return { els, calls, context };
+  // init() awaits preferences before scanning; let the microtask chain settle.
+  for (let i = 0; i < 10; i++) await new Promise((resolve) => setImmediate(resolve));
+  return { els, calls, context, stored, requested };
 }
 test('popup renders grouped scan with versions, searches, and explains header permission', async () => {
   const { els, calls } = await setup();
@@ -166,7 +213,7 @@ test('permission denial does not query OSV and auto preference hunts on scan', a
   const denied = await setup(undefined, { hunt, granted: false });
   await denied.els.hunt.events.click();
   assert.equal(calls, 0);
-  assert.match(denied.els['hunt-status'].textContent, /Chưa cấp quyền/);
+  assert.match(denied.els['hunt-status'].textContent, /Chưa cấp quyền OSV\/NVD/);
   await setup(undefined, { hunt, prefs: { autoHunt: true }, permitted: true });
   assert.equal(calls, 1);
 });
@@ -212,4 +259,27 @@ test('headers from an earlier load at the same URL are not reused', async () => 
       expected,
     );
   }
+});
+
+test('deep scan sends bundles to the engine and history is opt-in', async () => {
+  const off = await setup(undefined, { prefs: { deepScan: true } });
+  assert.equal(off.calls.length, 4);
+  assert.match(off.els.status.textContent, /quét sâu 1\/1 script/);
+  assert.equal(
+    vm.runInContext("report.technologies.find(t=>t.name==='jQuery').versions.join()", off.context),
+    '4.0.0,3.4.1',
+  );
+  assert.equal(off.stored.history, undefined);
+  const on = await setup(undefined, { prefs: { saveHistory: true } });
+  assert.equal(on.stored.history.length, 1);
+  assert.equal(on.stored.history[0].site, 'https://fixture.test');
+  assert.ok(!JSON.stringify(on.stored.history).includes('_next/a.js'));
+  await on.els['clear-history'].events.click();
+  assert.equal(on.stored.history, undefined);
+});
+test('CVE Hunt asks for OSV and NVD in one prompt and panel mode hides the panel button', async () => {
+  const { els, requested } = await setup(undefined, { panel: true });
+  await els.hunt.events.click();
+  assert.deepEqual(requested, ['https://api.osv.dev/*', 'https://services.nvd.nist.gov/*']);
+  assert.equal(els['open-panel'].hidden, true);
 });

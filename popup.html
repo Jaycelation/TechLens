@@ -13,7 +13,7 @@
         <h1>TechLens</h1>
         <p>Website technology inspector</p>
       </div>
-      <span class="local">TECH</span>
+      <button id="open-panel" title="Giữ kết quả khi chuyển tab">Mở side panel</button>
     </header>
     <section class="target">
       <strong id="host">Trang hiện tại</strong>
@@ -27,6 +27,12 @@
         Quét lại
       </button>
     </div>
+    <div class="options">
+      <label
+        ><input id="deep-scan" type="checkbox" /> Quét sâu bundle (tải lại JS, source map để lấy
+        phiên bản)</label
+      >
+    </div>
     <div class="summary">
       <span id="count">0 công nghệ</span><button id="export" disabled>Xuất JSON</button>
     </div>
@@ -36,14 +42,27 @@
         ><button id="fresh" disabled title="Bỏ cache và tra cứu lại">Tra mới</button
         ><label><input id="auto-hunt" type="checkbox" /> Tự hunt khi quét</label>
       </div>
-      <p>Tra OSV chỉ gửi tên package + phiên bản, không gửi URL website.</p>
+      <p>
+        OSV nhận tên package + phiên bản; NVD nhận tên CPE (nginx, Apache, PHP…). Không gửi URL
+        website.
+      </p>
       <div id="hunt-status" role="status" aria-live="polite">Chưa tra CVE.</div>
       <div id="hunt-results"></div>
     </section>
     <main id="results"></main>
+    <section class="history">
+      <details>
+        <summary id="history-summary">Lịch sử quét (0)</summary>
+        <div class="history-actions">
+          <label><input id="save-history" type="checkbox" /> Lưu lịch sử trên máy này</label
+          ><button id="clear-history">Xóa lịch sử</button>
+        </div>
+        <ul id="history-list"></ul>
+      </details>
+    </section>
     <footer>
-      <button id="headers">Bật đọc headers cho site này</button>
-      <p id="notice">Quét công nghệ cục bộ · CVE Hunt dùng OSV khi bật</p>
+      <button id="headers">Cấp quyền site (headers + quét từ side panel)</button>
+      <p id="notice">Quét công nghệ cục bộ · CVE Hunt dùng OSV/NVD khi bật</p>
       <small>Nhận diện bằng dấu vết. Phiên bản ẩn sẽ không được đoán.</small>
     </footer>
     <script type="module" src="popup.js"></script>

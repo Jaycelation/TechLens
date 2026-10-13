@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "TechLens — Website Technology Inspector",
-  "version": "1.1.1",
-  "description": "Inspect website technologies and correlate exact package versions with OSV advisories.",
+  "version": "1.2.0",
+  "description": "Inspect website technologies and correlate exact versions with OSV and NVD advisories.",
   "minimum_chrome_version": "123",
-  "permissions": ["activeTab", "scripting", "storage", "webRequest"],
+  "permissions": ["activeTab", "scripting", "storage", "webRequest", "sidePanel"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "action": {
     "default_popup": "popup.html",

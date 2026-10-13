@@ -242,3 +242,57 @@ small {
   font-size: 10px;
   color: #aebbd2;
 }
+body.panel {
+  width: auto;
+  max-height: none;
+}
+#open-panel {
+  margin-left: auto;
+  font-size: 10px;
+}
+#open-panel[hidden] {
+  display: none;
+}
+.options {
+  padding: 0 22px 10px;
+}
+.options label,
+.history-actions label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #bcc9df;
+}
+.options input,
+.history-actions input {
+  flex: 0;
+  width: 12px;
+  padding: 0;
+}
+.note {
+  font-size: 10px;
+  color: #edc875;
+  margin: 6px 0 0;
+}
+.history {
+  margin: 16px 22px 0;
+  font-size: 11px;
+  color: #aebbd2;
+}
+.history-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+}
+#history-list {
+  padding-left: 15px;
+}
+#history-list li {
+  margin-bottom: 6px;
+}
+#history-list strong {
+  color: #e9edf6;
+}
