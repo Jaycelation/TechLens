@@ -1,0 +1,175 @@
+[
+  {
+    "name": "Next.js",
+    "categories": ["JavaScript frameworks", "Web frameworks"],
+    "source": "urls",
+    "pattern": "/_next/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/_next/static/chunks/main.js"
+        }
+      ],
+      "noMatch": ["https://x.test/next/main.js"]
+    }
+  },
+  {
+    "name": "Next.js",
+    "categories": ["JavaScript frameworks", "Web frameworks"],
+    "source": "meta",
+    "pattern": "^generator:Next\\.js(?:\\s+v?(\\d+\\.\\d+\\.\\d+))?",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "generator:Next.js 16.2.10",
+          "version": "16.2.10"
+        },
+        {
+          "input": "generator:Next.js"
+        }
+      ],
+      "noMatch": ["generator:WordPress 6.4"]
+    }
+  },
+  {
+    "name": "React",
+    "categories": ["JavaScript libraries"],
+    "source": "markers",
+    "pattern": "^react$",
+    "confidence": "medium",
+    "examples": {
+      "match": [
+        {
+          "input": "react"
+        }
+      ],
+      "noMatch": ["reactive"]
+    }
+  },
+  {
+    "name": "Vue.js",
+    "categories": ["JavaScript frameworks"],
+    "source": "urls",
+    "pattern": "(?:^|/)vue(?:[.@/-]|\\.global)",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/js/vue.min.js"
+        },
+        {
+          "input": "https://unpkg.com/vue@3.4.0/dist/vue.global.js"
+        }
+      ],
+      "noMatch": ["https://x.test/js/revue.js"]
+    }
+  },
+  {
+    "name": "Angular",
+    "categories": ["JavaScript frameworks"],
+    "source": "markers",
+    "pattern": "^angular:",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "angular:17.0.0"
+        }
+      ],
+      "noMatch": ["ng-app"]
+    }
+  },
+  {
+    "name": "Svelte",
+    "categories": ["JavaScript frameworks"],
+    "source": "css",
+    "pattern": "\\.svelte-[a-z0-9]+",
+    "confidence": "medium",
+    "examples": {
+      "match": [
+        {
+          "input": ".btn.svelte-1x2y3z{color:red}"
+        }
+      ],
+      "noMatch": [".svelte{color:red}"]
+    }
+  },
+  {
+    "name": "Nuxt",
+    "categories": ["Web frameworks"],
+    "source": "urls",
+    "pattern": "/_nuxt/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/_nuxt/entry.js"
+        }
+      ],
+      "noMatch": ["https://x.test/nuxt/entry.js"]
+    }
+  },
+  {
+    "name": "Astro",
+    "categories": ["Static site generators"],
+    "source": "urls",
+    "pattern": "/_astro/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/_astro/index.css"
+        }
+      ],
+      "noMatch": ["https://x.test/astro/index.css"]
+    }
+  },
+  {
+    "name": "Gatsby",
+    "categories": ["Static site generators"],
+    "source": "inline",
+    "pattern": "___gatsby|___loader",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "document.getElementById('___gatsby')"
+        }
+      ],
+      "noMatch": ["gatsby"]
+    }
+  },
+  {
+    "name": "Alpine.js",
+    "categories": ["JavaScript frameworks"],
+    "source": "urls",
+    "pattern": "alpinejs(?:@|/)",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://cdn.jsdelivr.net/npm/alpinejs@3.13.0/dist/cdn.min.js"
+        }
+      ],
+      "noMatch": ["https://x.test/alpine.js"]
+    }
+  },
+  {
+    "name": "Turbopack",
+    "categories": ["Development"],
+    "source": "urls",
+    "pattern": "turbopack",
+    "confidence": "medium",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/_next/static/chunks/turbopack-abc.js"
+        }
+      ],
+      "noMatch": ["https://x.test/webpack.js"]
+    }
+  }
+]

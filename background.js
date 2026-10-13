@@ -1,5 +1,12 @@
 // Header observation is opt-in per origin. Keep only public technology headers.
-const allowed = new Set(['server', 'x-powered-by', 'x-vercel-id', 'x-vercel-cache', 'cf-ray']);
+const allowed = new Set([
+  'server',
+  'x-powered-by',
+  'x-vercel-id',
+  'x-vercel-cache',
+  'cf-ray',
+  'x-aspnet-version',
+]);
 const pending = new Map();
 chrome.webRequest.onHeadersReceived.addListener(
   (d) => {

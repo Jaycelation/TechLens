@@ -1,0 +1,156 @@
+[
+  {
+    "name": "WordPress",
+    "categories": ["CMS"],
+    "source": "urls",
+    "pattern": "/wp-(?:content|includes)/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/wp-content/themes/a/style.css"
+        }
+      ],
+      "noMatch": ["https://x.test/wp/content.css"]
+    }
+  },
+  {
+    "name": "WordPress",
+    "categories": ["CMS"],
+    "source": "meta",
+    "pattern": "^generator:WordPress(?:\\s+(\\d+\\.\\d+(?:\\.\\d+)?))?",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "generator:WordPress 6.4.2",
+          "version": "6.4.2"
+        }
+      ],
+      "noMatch": ["generator:Drupal 10"]
+    }
+  },
+  {
+    "name": "Drupal",
+    "categories": ["CMS"],
+    "source": "meta",
+    "pattern": "^generator:Drupal(?: ([0-9.]+))?",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "generator:Drupal 10.2.3 (https://www.drupal.org)",
+          "version": "10.2.3"
+        }
+      ],
+      "noMatch": ["generator:WordPress 6.4"]
+    }
+  },
+  {
+    "name": "Joomla",
+    "categories": ["CMS"],
+    "source": "meta",
+    "pattern": "^generator:Joomla!",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "generator:Joomla! - Open Source Content Management"
+        }
+      ],
+      "noMatch": ["generator:WordPress 6.4"]
+    }
+  },
+  {
+    "name": "Shopify",
+    "categories": ["E-commerce"],
+    "source": "urls",
+    "pattern": "cdn\\.shopify\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://cdn.shopify.com/s/files/1/theme.js"
+        }
+      ],
+      "noMatch": ["https://shopify.com/"]
+    }
+  },
+  {
+    "name": "Webflow",
+    "categories": ["Website builders"],
+    "source": "urls",
+    "pattern": "(?:assets\\.website-files\\.com|cdn\\.prod\\.website-files\\.com)/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://assets.website-files.com/a/js/webflow.js"
+        }
+      ],
+      "noMatch": ["https://webflow.com/"]
+    }
+  },
+  {
+    "name": "Wix",
+    "categories": ["Website builders"],
+    "source": "urls",
+    "pattern": "static\\.wixstatic\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://static.wixstatic.com/media/a.png"
+        }
+      ],
+      "noMatch": ["https://wix.com/"]
+    }
+  },
+  {
+    "name": "Cloudflare",
+    "categories": ["CDN"],
+    "source": "urls",
+    "pattern": "cdnjs\\.cloudflare\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"
+        }
+      ],
+      "noMatch": ["https://cloudflare.com/"]
+    }
+  },
+  {
+    "name": "jsDelivr",
+    "categories": ["CDN"],
+    "source": "urls",
+    "pattern": "cdn\\.jsdelivr\\.net/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"
+        }
+      ],
+      "noMatch": ["https://jsdelivr.com/"]
+    }
+  },
+  {
+    "name": "unpkg",
+    "categories": ["CDN"],
+    "source": "urls",
+    "pattern": "unpkg\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://unpkg.com/react@18.2.0/umd/react.js"
+        }
+      ],
+      "noMatch": ["https://x.test/unpkg.js"]
+    }
+  }
+]

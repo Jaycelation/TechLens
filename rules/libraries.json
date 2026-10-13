@@ -1,0 +1,201 @@
+[
+  {
+    "name": "jQuery",
+    "categories": ["JavaScript libraries"],
+    "source": "urls",
+    "pattern": "/jquery(?:[-.]([0-9]+\\.[0-9]+\\.[0-9]+))?(?:\\.min)?\\.js(?:[?#]|$)",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "https://code.jquery.com/jquery-3.4.1.min.js",
+          "version": "3.4.1"
+        },
+        {
+          "input": "https://x.test/js/jquery.js?v=1"
+        }
+      ],
+      "noMatch": ["https://x.test/js/jquery-ui.min.js", "https://x.test/jquery.json"]
+    }
+  },
+  {
+    "name": "jQuery CDN",
+    "categories": ["CDN"],
+    "source": "urls",
+    "pattern": "https?://code\\.jquery\\.com/",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://code.jquery.com/jquery-3.7.1.min.js"
+        }
+      ],
+      "noMatch": ["https://x.test/code.jquery.com.js"]
+    }
+  },
+  {
+    "name": "Bootstrap",
+    "categories": ["UI frameworks"],
+    "source": "urls",
+    "pattern": "bootstrap(?:@|/|-)([0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?)(?=[/?#]|$)|bootstrap(?:\\.min)?\\.(?:css|js)",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "https://x.test/bootstrap-3.3.7/js/bootstrap.min.js",
+          "version": "3.3.7"
+        },
+        {
+          "input": "https://x.test/css/bootstrap.min.css"
+        }
+      ],
+      "noMatch": ["https://x.test/css/bootstrapper.css"]
+    }
+  },
+  {
+    "name": "HTMX",
+    "categories": ["JavaScript libraries"],
+    "source": "urls",
+    "pattern": "htmx\\.org(?:@|/)|/htmx(?:\\.min)?\\.js",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://unpkg.com/htmx.org@1.9.0"
+        },
+        {
+          "input": "https://x.test/js/htmx.min.js"
+        }
+      ],
+      "noMatch": ["https://x.test/js/htmxx.js"]
+    }
+  },
+  {
+    "name": "D3.js",
+    "categories": ["JavaScript libraries"],
+    "source": "urls",
+    "pattern": "/d3(?:[.@/-]|\\.min\\.js)",
+    "confidence": "medium",
+    "examples": {
+      "match": [
+        {
+          "input": "https://d3js.org/d3.v7.min.js"
+        }
+      ],
+      "noMatch": ["https://x.test/d3x.js"]
+    }
+  },
+  {
+    "name": "Chart.js",
+    "categories": ["JavaScript libraries"],
+    "source": "urls",
+    "pattern": "chart\\.js(?:@|/)|/chart(?:\\.umd)?(?:\\.min)?\\.js",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+        },
+        {
+          "input": "https://x.test/js/chart.min.js"
+        }
+      ],
+      "noMatch": ["https://x.test/js/flowchart.js"]
+    }
+  },
+  {
+    "name": "Lucide",
+    "categories": ["Icon libraries"],
+    "source": "markers",
+    "pattern": "^lucide$",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "lucide"
+        }
+      ],
+      "noMatch": ["lucide-react"]
+    }
+  },
+  {
+    "name": "Font Awesome",
+    "categories": ["Icon libraries"],
+    "source": "urls",
+    "pattern": "(?:fontawesome|font-awesome)",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "https://kit.fontawesome.com/abc.js"
+        },
+        {
+          "input": "https://x.test/font-awesome/css/all.css"
+        }
+      ],
+      "noMatch": ["https://x.test/awesome.css"]
+    }
+  },
+  {
+    "name": "Tailwind CSS",
+    "categories": ["UI frameworks"],
+    "source": "css",
+    "pattern": "--tw-(?:ring|translate|shadow|border|gradient|space)-",
+    "confidence": "medium",
+    "examples": {
+      "match": [
+        {
+          "input": ":root{--tw-ring-color:red}"
+        }
+      ],
+      "noMatch": [".tw{color:red}"]
+    }
+  },
+  {
+    "name": "Radix UI",
+    "categories": ["UI frameworks"],
+    "source": "markers",
+    "pattern": "^radix$",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "radix"
+        }
+      ],
+      "noMatch": ["radix-ui"]
+    }
+  },
+  {
+    "name": "Priority Hints",
+    "categories": ["Performance"],
+    "source": "markers",
+    "pattern": "^priority-hints$",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "priority-hints"
+        }
+      ],
+      "noMatch": ["priority"]
+    }
+  },
+  {
+    "name": "Open Graph",
+    "categories": ["Miscellaneous"],
+    "source": "meta",
+    "pattern": "^og:",
+    "confidence": "high",
+    "examples": {
+      "match": [
+        {
+          "input": "og:title:Example"
+        }
+      ],
+      "noMatch": ["twitter:card:summary"]
+    }
+  }
+]

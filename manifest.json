@@ -3,7 +3,7 @@
   "name": "TechLens — Website Technology Inspector",
   "version": "1.1.1",
   "description": "Inspect website technologies and correlate exact package versions with OSV advisories.",
-  "minimum_chrome_version": "106",
+  "minimum_chrome_version": "123",
   "permissions": ["activeTab", "scripting", "storage", "webRequest"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "action": {
