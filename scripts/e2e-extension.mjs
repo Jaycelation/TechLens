@@ -70,6 +70,23 @@ try {
   await ui.waitForTimeout(500);
   assert.equal(await ui.evaluate(() => document.body.classList.contains('panel')), true);
 
+  // On a fresh profile the webRequest listener can miss the very first navigation. Users always
+  // reload after granting site access, so do the same once if no headers were stored.
+  const headersStored = () =>
+    ui.evaluate(async (url) => {
+      const [tab] = await chrome.tabs.query({ url: url + '*' });
+      for (let i = 0; i < 30; i++) {
+        if ((await chrome.storage.session.get('headers:' + tab.id))['headers:' + tab.id])
+          return true;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      return false;
+    }, site);
+  if (!(await headersStored())) {
+    await target.reload();
+    assert.ok(await headersStored(), 'background.js stored response headers after reload');
+  }
+
   const result = await ui.evaluate(async (url) => {
     const { collectPage, collectGlobals, collectBundles } = await import('./collector.js');
     const { detect } = await import('./engine.js');
@@ -80,14 +97,7 @@ try {
       chrome.scripting.executeScript({ target, world: 'MAIN', func: collectGlobals }),
       chrome.scripting.executeScript({ target, func: collectBundles }),
     ]);
-    // background.js writes headers asynchronously; on slow CI runners the page can finish
-    // loading first, so wait for the entry instead of reading it once.
-    const key = 'headers:' + tab.id;
-    let headers;
-    for (let i = 0; i < 50 && !headers; i++) {
-      headers = (await chrome.storage.session.get(key))[key];
-      if (!headers) await new Promise((r) => setTimeout(r, 100));
-    }
+    const headers = (await chrome.storage.session.get('headers:' + tab.id))['headers:' + tab.id];
     await chrome.sidePanel.setOptions({ path: 'popup.html?panel', enabled: true });
     return {
       technologies: detect(
