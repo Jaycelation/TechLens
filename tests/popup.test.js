@@ -62,17 +62,21 @@ async function setup(url = 'https://fixture.test/', options = {}) {
       scripting: {
         executeScript: async (args) => {
           calls.push(args);
+          // The third call re-reads location.href to detect redirects mid-scan.
+          if (args.func !== context.collectPage && args.func !== context.collectGlobals)
+            return [{ documentId: options.checkId || 'doc-1', result: url }];
           return [
             {
+              documentId: args.world ? options.globalId || 'doc-1' : 'doc-1',
               result: args.world
                 ? { next: '16.2.10', jquery: '4.0.0' }
-                : { scripts: ['https://fixture.test/_next/a.js'] },
+                : { navigationStartedAt: 1000, scripts: ['https://fixture.test/_next/a.js'] },
             },
           ];
         },
       },
       storage: {
-        session: { get: async () => ({}) },
+        session: { get: async () => (options.headers ? { 'headers:1': options.headers } : {}) },
         local: { get: async () => options.prefs || {}, set: async () => {} },
       },
       permissions: {
@@ -90,7 +94,7 @@ async function setup(url = 'https://fixture.test/', options = {}) {
 }
 test('popup renders grouped scan with versions, searches, and explains header permission', async () => {
   const { els, calls } = await setup();
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
   assert.equal(calls[1].world, 'MAIN');
   assert.equal(els.export.disabled, false);
   assert.match(els.status.textContent, /2 công nghệ/);
@@ -181,4 +185,31 @@ test('new scan aborts previous hunt and discards stale CVE result', async () => 
   await pending;
   assert.equal(els['hunt-status'].textContent, 'Chưa tra CVE.');
   assert.equal(els.hunt.disabled, false);
+});
+test('reload at the same URL rejects mixed document snapshots', async () => {
+  for (const options of [{ globalId: 'doc-2' }, { checkId: 'doc-2' }]) {
+    const { els } = await setup(undefined, options);
+    assert.equal(els.export.disabled, true);
+    assert.equal(els.hunt.disabled, true);
+    assert.match(els.status.textContent, /Quét lại/);
+  }
+});
+test('headers from an earlier load at the same URL are not reused', async () => {
+  for (const [observedAt, expected] of [
+    [999, false],
+    [1001, true],
+  ]) {
+    const { context } = await setup(undefined, {
+      headers: {
+        url: 'https://fixture.test/',
+        observedAt,
+        headers: [{ name: 'server', value: 'nginx/1.26.3' }],
+      },
+    });
+    assert.equal(vm.runInContext('report.headersAvailable', context), expected);
+    assert.equal(
+      vm.runInContext("report.technologies.some(t=>t.name==='Nginx')", context),
+      expected,
+    );
+  }
 });
