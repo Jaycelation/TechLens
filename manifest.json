@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "TechLens \u2014 Website Technology Inspector",
+  "version": "1.1.0",
+  "description": "Inspect website technologies and correlate exact package versions with OSV advisories.",
+  "minimum_chrome_version": "102",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "webRequest"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Inspect technologies"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}

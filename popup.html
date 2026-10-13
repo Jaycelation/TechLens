@@ -1,0 +1,8 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TechLens</title><link rel="stylesheet" href="popup.css"></head><body>
+<header><div class="logo">T</div><div><h1>TechLens</h1><p>Website technology inspector</p></div><span class="local">TECH</span></header>
+<section class="target"><strong id="host">Trang hiện tại</strong><div id="status" role="status" aria-live="polite">Đang đọc dấu vết công nghệ…</div></section>
+<div class="toolbar"><input id="search" aria-label="Tìm công nghệ" placeholder="Tìm công nghệ hoặc nhóm…"><button id="scan" title="Quét lại">Quét lại</button></div>
+<div class="summary"><span id="count">0 công nghệ</span><button id="export" disabled>Xuất JSON</button></div>
+<section class="hunt-panel"><div class="hunt-actions"><button id="hunt" disabled>CVE Hunt</button><button id="fresh" disabled title="Bỏ cache và tra cứu lại">Tra mới</button><label><input id="auto-hunt" type="checkbox"> Tự hunt khi quét</label></div><p>Tra OSV chỉ gửi tên package + phiên bản, không gửi URL website.</p><div id="hunt-status" role="status" aria-live="polite">Chưa tra CVE.</div><div id="hunt-results"></div></section><main id="results"></main>
+<footer><button id="headers">Bật đọc headers cho site này</button><p id="notice">Quét công nghệ cục bộ · CVE Hunt dùng OSV khi bật</p><small>Nhận diện bằng dấu vết. Phiên bản ẩn sẽ không được đoán.</small></footer>
+<script type="module" src="popup.js"></script></body></html>
