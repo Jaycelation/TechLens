@@ -22,7 +22,7 @@ TechLens is a Chrome/Edge extension (plus a command-line scanner) that fingerpri
 
 Requires Chrome or Edge **123 or later**.
 
-1. Download `TechLens-<version>.zip` from the [latest release](https://github.com/Jaycelation/TechScan/releases/latest) and unzip it.
+1. Download `TechLens-<version>.zip` from the [latest release](https://github.com/Jaycelation/TechLens/releases/latest) and unzip it.
    (Or clone this repository — the extension runs straight from the source folder, no build step.)
 2. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge).
 3. Turn on **Developer mode**.
@@ -63,7 +63,7 @@ Scan many sites with the same detection engine in headless Chromium. **Only scan
 Requires Node.js 20+.
 
 ```sh
-git clone https://github.com/Jaycelation/TechScan.git && cd TechScan
+git clone https://github.com/Jaycelation/TechLens.git && cd TechLens
 npm install
 npx playwright install chromium
 
