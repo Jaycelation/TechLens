@@ -1,8 +1,13 @@
 import { PACKAGES, compareVersions } from './cve.js';
 import { RULES } from './rules/index.js';
+import { analyzeBundles } from './bundles.js';
 export { RULES };
 // Fingerprints are indicators, not vulnerability assessments.
-const compiled = RULES.map((rule) => ({ ...rule, re: new RegExp(rule.pattern, 'i') }));
+// Banner rules run per bundle in bundles.js so evidence can name the file.
+const compiled = RULES.filter((rule) => rule.source !== 'banners').map((rule) => ({
+  ...rule,
+  re: new RegExp(rule.pattern, 'i'),
+}));
 const categoriesOf = (name) => RULES.find((r) => r.name === name)?.categories;
 
 export function redact(s) {
@@ -47,7 +52,7 @@ export function matchRule(rule, input) {
 
 export function detect(snapshot = {}, globals = {}, headers = []) {
   const map = new Map();
-  const add = (name, categories, confidence, evidence, version) => {
+  const add = (name, categories, confidence, evidence, version, extra) => {
     if (!map.has(name))
       map.set(name, { name, categories: [...categories], confidence, versions: [], evidence: [] });
     const t = map.get(name);
@@ -60,6 +65,7 @@ export function detect(snapshot = {}, globals = {}, headers = []) {
     )
       t.versions.push(version);
     if (!t.evidence.includes(evidence) && t.evidence.length < 8) t.evidence.push(evidence);
+    if (extra) Object.assign(t, extra);
   };
   const sources = {
     urls: [...(snapshot.scripts || []), ...(snapshot.links || []), ...(snapshot.resources || [])],
@@ -153,6 +159,7 @@ export function detect(snapshot = {}, globals = {}, headers = []) {
   for (const m of snapshot.markers || [])
     if (m.startsWith('angular:'))
       add('Angular', ['JavaScript frameworks'], 'high', 'DOM: ng-version', m.slice(8));
+  analyzeBundles(snapshot.bundles, add, redact);
   detectWordPressExtensions(sources.urls, map.get('WordPress')?.versions || [], add, map);
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

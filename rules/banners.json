@@ -1,0 +1,160 @@
+[
+  {
+    "name": "jQuery",
+    "categories": ["JavaScript libraries"],
+    "source": "banners",
+    "pattern": "\\bjQuery (?:JavaScript Library )?v(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)\\b",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "/*! jQuery v3.4.1 | (c) JS Foundation and other contributors | jquery.org/license */",
+          "version": "3.4.1"
+        },
+        {
+          "input": "/*!\n * jQuery JavaScript Library v1.12.4\n * http://jquery.com/",
+          "version": "1.12.4"
+        }
+      ],
+      "noMatch": [
+        "/*! jQuery UI - v1.12.1 - 2016-09-14",
+        "/*! jQuery Migrate v3.4.1 | (c) OpenJS Foundation */"
+      ]
+    }
+  },
+  {
+    "name": "Bootstrap",
+    "categories": ["UI frameworks"],
+    "source": "banners",
+    "pattern": "\\bBootstrap v(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)\\b",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        { "input": "/*!\n  * Bootstrap v5.3.0 (https://getbootstrap.com/)", "version": "5.3.0" }
+      ],
+      "noMatch": [
+        "/*!\n * Bootstrap Icons v1.10.0 (https://icons.getbootstrap.com/)",
+        "/*! bootstrap-select v1.13.18"
+      ]
+    }
+  },
+  {
+    "name": "Vue.js",
+    "categories": ["JavaScript frameworks"],
+    "source": "banners",
+    "pattern": "\\bvue(?:\\.js)? v(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)\\b",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        { "input": "/*!\n * Vue.js v2.6.14\n * (c) 2014-2021 Evan You", "version": "2.6.14" },
+        { "input": "/**\n* vue v3.4.21\n* (c) 2018-present Yuxi (Evan) You", "version": "3.4.21" }
+      ],
+      "noMatch": ["/*!\n  * vue-router v4.2.5\n  * (c) 2023 Eduardo San Martin Morote"]
+    }
+  },
+  {
+    "name": "AngularJS",
+    "categories": ["JavaScript frameworks"],
+    "source": "banners",
+    "pattern": "\\bAngularJS v(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)\\b",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "/*\n @license AngularJS v1.8.2\n (c) 2010-2020 Google LLC. http://angularjs.org",
+          "version": "1.8.2"
+        }
+      ],
+      "noMatch": ["/** @license Angular v17.0.0 */"]
+    }
+  },
+  {
+    "name": "React",
+    "categories": ["JavaScript libraries"],
+    "source": "banners",
+    "pattern": "@license React v(\\d+\\.\\d+\\.\\d+)\\s*\\*\\s*react\\.(?:production|development)",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "/** @license React v16.14.0\n * react.production.min.js\n *",
+          "version": "16.14.0"
+        }
+      ],
+      "noMatch": [
+        "/** @license React v16.14.0\n * react-dom.production.min.js\n *",
+        "/**\n * @license React\n * react.production.min.js"
+      ]
+    }
+  },
+  {
+    "name": "Chart.js",
+    "categories": ["JavaScript libraries"],
+    "source": "banners",
+    "pattern": "\\bChart\\.js v(\\d+\\.\\d+\\.\\d+(?:-[\\w.]+)?)\\b",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        { "input": "/*!\n * Chart.js v4.4.0\n * https://www.chartjs.org", "version": "4.4.0" }
+      ],
+      "noMatch": ["/*! chartjs-plugin-datalabels v2.2.0"]
+    }
+  },
+  {
+    "name": "D3.js",
+    "categories": ["JavaScript libraries"],
+    "source": "banners",
+    "pattern": "d3js\\.org v(\\d+\\.\\d+\\.\\d+)\\b",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "// https://d3js.org v7.8.5 Copyright 2010-2023 Mike Bostock",
+          "version": "7.8.5"
+        }
+      ],
+      "noMatch": ["// https://d3js.org/d3-array/ v3.2.4 Copyright"]
+    }
+  },
+  {
+    "name": "Moment.js",
+    "categories": ["JavaScript libraries"],
+    "source": "banners",
+    "pattern": "moment\\.js\\s*(?://!)?\\s*version : (\\d+\\.\\d+\\.\\d+)\\b",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "//! moment.js\n//! version : 2.29.4\n//! authors : Tim Wood",
+          "version": "2.29.4"
+        }
+      ],
+      "noMatch": ["//! moment-timezone.js\n//! version : 0.5.43"]
+    }
+  },
+  {
+    "name": "DOMPurify",
+    "categories": ["JavaScript libraries"],
+    "source": "banners",
+    "pattern": "@license DOMPurify (\\d+\\.\\d+\\.\\d+)\\b",
+    "confidence": "high",
+    "version": 1,
+    "examples": {
+      "match": [
+        {
+          "input": "/*! @license DOMPurify 3.0.6 | (c) Cure53 and other contributors",
+          "version": "3.0.6"
+        }
+      ],
+      "noMatch": ["/*! purify.js"]
+    }
+  }
+]

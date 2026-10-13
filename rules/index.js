@@ -5,6 +5,7 @@ import libraries from './libraries.json' with { type: 'json' };
 import analytics from './analytics.json' with { type: 'json' };
 import platforms from './platforms.json' with { type: 'json' };
 import headers from './headers.json' with { type: 'json' };
+import banners from './banners.json' with { type: 'json' };
 
 export const RULES = Object.freeze([
   ...frameworks,
@@ -12,4 +13,5 @@ export const RULES = Object.freeze([
   ...analytics,
   ...platforms,
   ...headers,
+  ...banners,
 ]);

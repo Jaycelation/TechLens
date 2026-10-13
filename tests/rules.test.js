@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RULES, matchRule } from '../engine.js';
 
-const SOURCES = new Set(['urls', 'markers', 'meta', 'inline', 'css', 'headers']);
+const SOURCES = new Set(['urls', 'markers', 'meta', 'inline', 'css', 'headers', 'banners']);
 const input = (rule, value) => (rule.source === 'headers' ? { name: rule.header, value } : value);
 const label = (rule) => `${rule.name} (${rule.source}${rule.header ? ':' + rule.header : ''})`;
 

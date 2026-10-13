@@ -79,3 +79,111 @@ export function collectGlobals() {
   read('wordpress', () => !!window.wp?.hooks);
   return out;
 }
+// Opt-in deep scan: re-reads script files (normally from the HTTP cache) to hash them and pull
+// license banners and source map paths. Runs in the isolated world; cookies are not sent.
+export async function collectBundles(limits = {}) {
+  const maxScripts = limits.maxScripts || 25;
+  const maxBytes = limits.maxBytes || 4_000_000;
+  const maxMapBytes = limits.maxMapBytes || 8_000_000;
+  const urls = [
+    ...new Set(
+      Array.from(document.querySelectorAll('script[src]'))
+        .map((s) => s.src)
+        .filter((u) => /^https?:/.test(u)),
+    ),
+  ].slice(0, maxScripts);
+  const read = async (url, limit) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(url, {
+        credentials: 'omit',
+        cache: 'force-cache',
+        signal: controller.signal,
+      });
+      if (!response.ok) return null;
+      if (Number(response.headers.get('content-length')) > limit) return null;
+      const buffer = await response.arrayBuffer();
+      return buffer.byteLength > limit ? null : buffer;
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  const base64 = (buffer) => {
+    const bytes = new Uint8Array(buffer);
+    let s = '';
+    for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  };
+  const banners = (text) => {
+    const out = [text.slice(0, 300)];
+    const re = /\/\*[!*][\s\S]{0,600}?\*\/|(?:^|\n)\/\/! [^\n]*(?:\n\/\/! [^\n]*){0,3}/g;
+    let m;
+    while ((m = re.exec(text)) && out.length < 50)
+      if (m[0].startsWith('/*!') || /@license|@preserve|\/\/!/.test(m[0]))
+        out.push(m[0].slice(0, 300));
+    return out;
+  };
+  const mapSources = async (text, scriptUrl) => {
+    const m = /\/\/[#@] sourceMappingURL=([^\s'"]+)\s*$/.exec(text.slice(-1000));
+    if (!m) return null;
+    let json;
+    if (m[1].startsWith('data:')) {
+      const inline = /^data:application\/json[^,]*;base64,(.+)$/.exec(m[1]);
+      if (!inline || inline[1].length > maxMapBytes) return null;
+      json = atob(inline[1]);
+    } else {
+      let url;
+      try {
+        url = new URL(m[1], scriptUrl);
+      } catch {
+        return null;
+      }
+      if (!/^https?:$/.test(url.protocol)) return null;
+      const buffer = await read(url.href, maxMapBytes);
+      if (!buffer) return null;
+      json = new TextDecoder().decode(buffer);
+    }
+    try {
+      const map = JSON.parse(json);
+      const sources = [
+        ...(map.sources || []),
+        ...(map.sections || []).flatMap((s) => s.map?.sources || []),
+      ];
+      return sources
+        .filter((s) => typeof s === 'string')
+        .slice(0, 3000)
+        .map((s) => s.slice(0, 300));
+    } catch {
+      return null;
+    }
+  };
+  const out = [];
+  let cursor = 0;
+  async function worker() {
+    while (cursor < urls.length) {
+      const url = urls[cursor++];
+      const buffer = await read(url, maxBytes);
+      if (!buffer) {
+        out.push({ url, error: 'unreadable' });
+        continue;
+      }
+      const text = new TextDecoder().decode(buffer);
+      // crypto.subtle only exists on HTTPS pages; hashing is skipped elsewhere.
+      const sha256 = globalThis.crypto?.subtle
+        ? base64(await crypto.subtle.digest('SHA-256', buffer))
+        : null;
+      out.push({
+        url,
+        size: buffer.byteLength,
+        sha256,
+        banners: banners(text),
+        mapSources: await mapSources(text, url),
+      });
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(4, urls.length) }, worker));
+  return out;
+}

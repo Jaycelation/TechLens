@@ -12,6 +12,9 @@ export const PACKAGES = Object.freeze({
   HTMX: 'htmx.org',
   'Alpine.js': 'alpinejs',
   'D3.js': 'd3',
+  Lodash: 'lodash',
+  'Moment.js': 'moment',
+  DOMPurify: 'dompurify',
 });
 export const OSV_ORIGIN = 'https://api.osv.dev/*';
 const EXACT =
@@ -92,8 +95,15 @@ export function matchAffected(advisory, pkg, version) {
 export function planHunt(technologies) {
   const queries = [],
     skipped = [];
-  for (const t of technologies) {
-    const pkg = Object.hasOwn(PACKAGES, t.name) ? PACKAGES[t.name] : null;
+  // Packages seen only in source maps (t.npm) come after curated ones so the 12-query cap
+  // favours libraries with known browser exposure.
+  const ordered = [...technologies].sort((a, b) => !!a.npm - !!b.npm);
+  for (const t of ordered) {
+    const pkg = Object.hasOwn(PACKAGES, t.name)
+      ? PACKAGES[t.name]
+      : typeof t.npm === 'string'
+        ? t.npm
+        : null;
     if (!pkg) {
       skipped.push({ technology: t.name, reason: 'Chưa có mapping package được hỗ trợ' });
       continue;
