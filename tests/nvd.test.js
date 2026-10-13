@@ -131,3 +131,14 @@ test('huntAll merges OSV and NVD and explains when NVD is not allowed', async ()
   assert.equal(osvOnly.queries.length, 1);
   assert.match(osvOnly.skipped.find((s) => s.technology === 'Nginx').reason, /NVD/);
 });
+test('partial NVD results are not cached', async () => {
+  const state = {};
+  const cache = {
+    get: async (k) => ({ [k]: state[k] }),
+    set: async (d) => Object.assign(state, d),
+  };
+  const fetchFn = async () => response({ totalResults: 500, vulnerabilities: [item()] });
+  const out = await huntNvd([nginx], { fetchFn, cache });
+  assert.equal(out.queries[0].status, 'partial');
+  assert.deepEqual(state, {});
+});

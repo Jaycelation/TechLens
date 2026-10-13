@@ -171,7 +171,7 @@ export async function huntNvd(
           clearTimeout(timer);
           signal?.removeEventListener('abort', cancel);
         }
-        if (cache) {
+        if (cache && !raw.partial) {
           try {
             await cache.set({ [key]: { at: Date.now(), payload: raw } });
           } catch {
